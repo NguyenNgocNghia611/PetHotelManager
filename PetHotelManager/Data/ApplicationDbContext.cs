@@ -10,5 +10,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         : base(options)
     {
     }
+    public DbSet<EmployeeProfile> EmployeeProfiles { get; set; }
 
 }
