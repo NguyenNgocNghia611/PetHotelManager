@@ -12,13 +12,9 @@ using PetHotelManager.Data;
 namespace PetHotelManager.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-<<<<<<<< HEAD:PetHotelManager/Migrations/20251029144433_Initial.Designer.cs
+
     [Migration("20251029144433_Initial")]
     partial class Initial
-========
-    [Migration("20251029102418_InitDatabase")]
-    partial class InitDatabase
->>>>>>>> 5b64263 (update migrations):PetHotelManager/Migrations/20251029102418_InitDatabase.Designer.cs
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
