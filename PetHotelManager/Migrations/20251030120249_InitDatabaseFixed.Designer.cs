@@ -12,9 +12,8 @@ using PetHotelManager.Data;
 namespace PetHotelManager.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-
-    [Migration("20251029144433_Initial")]
-    partial class Initial
+    [Migration("20251030120249_InitDatabaseFixed")]
+    partial class InitDatabaseFixed
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
