@@ -39,5 +39,6 @@ public static class DataSeeder
                 await userManager.AddToRoleAsync(newAdminUser, "Admin");
             }
         }
+
     }
 }
