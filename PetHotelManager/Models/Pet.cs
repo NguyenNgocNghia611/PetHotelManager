@@ -22,6 +22,17 @@ namespace PetHotelManager.Models
         [StringLength(50)]
         public string Breed { get; set; }
 
+        [Range(0, 100)]
+        public int Age { get; set; }         
+
+        [StringLength(30)]
+        public string Color { get; set; }    
+
+        [StringLength(255)]
+        public string HealthStatus { get; set; } 
+
+        public string? ImageUrl { get; set; }
+
         // Navigation
         public ICollection<MedicalRecord> MedicalRecords { get; set; }
         public ICollection<Appointment> Appointments { get; set; }
