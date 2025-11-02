@@ -26,7 +26,7 @@ public class CustomerController : ControllerBase
     )
     {
         _userManager = userManager;
-        _roleManager = _roleManager;
+        _roleManager = roleManager;
         _context = context;
     }
 

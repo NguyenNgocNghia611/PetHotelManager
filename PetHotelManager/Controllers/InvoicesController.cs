@@ -7,6 +7,9 @@ using PetHotelManager.Data;
 using PetHotelManager.DTOs.Invoices;
 using PetHotelManager.Models;
 
+[ApiController]
+[Route("api/[controller]")]
+[Authorize(Roles = "Admin,Staff")]
 public class InvoicesController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
