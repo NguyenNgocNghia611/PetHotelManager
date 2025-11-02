@@ -14,6 +14,7 @@
 
         public DbSet<Pet> Pets { get; set; }
         public DbSet<Room> Rooms { get; set; }
+        public DbSet<RoomType> RoomTypes { get; set; }
         public DbSet<Service> Services { get; set; }
         public DbSet<Appointment> Appointments { get; set; }
         public DbSet<Product> Products { get; set; }
@@ -74,6 +75,12 @@
                 .WithMany()
                 .HasForeignKey(m => m.VeterinarianId)
                 .OnDelete(DeleteBehavior.Restrict);
+            // 🔹 8. Room - RoomType
+            modelBuilder.Entity<Room>()
+               .HasOne(r => r.RoomType)
+               .WithMany(t => t.Rooms)
+               .HasForeignKey(r => r.RoomTypeId)
+               .OnDelete(DeleteBehavior.Restrict);
 
             // 🔹 8. Tự động cấu hình precision cho tất cả các thuộc tính decimal
             foreach (var entityType in modelBuilder.Model.GetEntityTypes())

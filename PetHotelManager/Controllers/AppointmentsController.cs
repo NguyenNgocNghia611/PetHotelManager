@@ -137,8 +137,10 @@ namespace PetHotelManager.Controllers
                     PetName = a.Pet.Name,
                     ServiceName = a.Service.Name,
                     RoomName = a.Room != null
-                        ? $"{a.Room.RoomNumber} - {a.Room.TypeName}"
+                        ? $"{a.Room.RoomNumber} - {a.Room.RoomType.TypeName}"
                         : null,
+
+
                     AppointmentDate = a.AppointmentDate,
                     Status = a.Status
                 })
@@ -167,6 +169,7 @@ namespace PetHotelManager.Controllers
                 .Include(a => a.Pet)
                 .Include(a => a.Service)
                 .Include(a => a.Room)
+                    .ThenInclude(r => r.RoomType)
                 .Where(a => a.Id == id)
                 .Select(a => new AppointmentDetailDto
                 {
@@ -176,7 +179,7 @@ namespace PetHotelManager.Controllers
                     PetName = a.Pet.Name,
                     ServiceName = a.Service.Name,
                     RoomName = a.Room != null
-                        ? $"{a.Room.RoomNumber} - {a.Room.TypeName}"
+                        ? $"{a.Room.RoomNumber} - {a.Room.RoomType.TypeName}"
                         : null,
                     AppointmentDate = a.AppointmentDate,
                     Status = a.Status,
@@ -189,6 +192,7 @@ namespace PetHotelManager.Controllers
 
             return Ok(appointment);
         }
+
 
         [HttpGet("filter")]
         public async Task<IActionResult> FilterAppointmentsByStatus(
