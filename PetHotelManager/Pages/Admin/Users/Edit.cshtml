@@ -1,0 +1,56 @@
+@page "/admin/users/edit/{id}"
+@model PetHotelManager.Pages.Admin.Users.EditModel
+@{
+    ViewData["Title"] = "Chỉnh sửa Người dùng";
+}
+
+<h1>@ViewData["Title"]: @Model.Input.Username</h1>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <!-- Input ẩn để lưu Id -->
+            <input type="hidden" asp-for="Input.Id" />
+
+            <div class="mb-3">
+                <label asp-for="Input.Username" class="form-label"></label>
+                <input asp-for="Input.Username" class="form-control" readonly />
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.FullName" class="form-label"></label>
+                <input asp-for="Input.FullName" class="form-control" />
+                <span asp-validation-for="Input.FullName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Email" class="form-label"></label>
+                <input asp-for="Input.Email" class="form-control" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.PhoneNumber" class="form-label"></label>
+                <input asp-for="Input.PhoneNumber" class="form-control" />
+                <span asp-validation-for="Input.PhoneNumber" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Role" class="form-label"></label>
+                <select asp-for="Input.Role" asp-items="@(new SelectList(Model.Roles))" class="form-select">
+                </select>
+                <span asp-validation-for="Input.Role" class="text-danger"></span>
+            </div>
+
+            <div class="form-check mb-3">
+                <input class="form-check-input" type="checkbox" asp-for="Input.IsActive">
+                <label class="form-check-label" asp-for="Input.IsActive"></label>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
+        </form>
+    </div>
+</div>
