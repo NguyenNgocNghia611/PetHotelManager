@@ -1,0 +1,84 @@
+@page "/customers/details/{id}"
+@model PetHotelManager.Pages.Customers.DetailsModel
+@{
+    ViewData["Title"] = "Chi tiết Khách hàng";
+}
+
+@if (Model.CustomerHistory != null)
+{
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+        <h1>@Model.CustomerHistory.Customer.FullName</h1>
+        <div>
+            <a asp-page="./Edit" asp-route-id="@Model.CustomerHistory.Customer.Id" class="btn btn-secondary">Chỉnh sửa</a>
+            <a asp-page="./Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
+        </div>
+    </div>
+    <hr />
+
+    <!-- Thông tin cá nhân -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <p><strong>Email:</strong> @Model.CustomerHistory.Customer.Email</p>
+            <p><strong>Số điện thoại:</strong> @Model.CustomerHistory.Customer.PhoneNumber</p>
+        </div>
+    </div>
+
+    <!-- Danh sách Thú cưng -->
+    <div class="mb-4">
+        <h4>Các Thú cưng sở hữu (@Model.CustomerHistory.Pets.Count)</h4>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr><th>Tên</th><th>Loài</th><th>Giống</th><th></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var pet in Model.CustomerHistory.Pets)
+                    {
+                        <tr>
+                            <td>@pet.Name</td>
+                            <td>@pet.Species</td>
+                            <td>@pet.Breed</td>
+                            <td class="text-end">
+                                <a asp-page="/Pets/Details" asp-route-id="@pet.Id" class="btn btn-sm btn-outline-info">Xem chi tiết</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Lịch sử Hóa đơn -->
+     <div>
+        <h4>Lịch sử Hóa đơn (@Model.CustomerHistory.Invoices.Count)</h4>
+        <div class="table-responsive">
+            <table class="table table-sm table-hover">
+                <thead>
+                    <tr><th>Mã HĐ</th><th>Ngày tạo</th><th class="text-end">Tổng tiền</th><th>Trạng thái</th><th></th></tr>
+                </thead>
+                <tbody>
+                     @foreach (var invoice in Model.CustomerHistory.Invoices)
+                    {
+                        <tr>
+                            <td>#@invoice.Id</td>
+                            <td>@invoice.InvoiceDate.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                            <td class="text-end">@invoice.TotalAmount.ToString("N0") VNĐ</td>
+                            <td>
+                                <span class="badge @(invoice.Status == "Paid" ? "bg-success" : (invoice.Status == "Cancelled" ? "bg-danger" : "bg-warning"))">
+                                    @invoice.Status
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a asp-page="/Invoices/Details" asp-route-id="@invoice.Id" class="btn btn-sm btn-outline-info">Xem chi tiết</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger">Không tìm thấy thông tin khách hàng.</div>
+}

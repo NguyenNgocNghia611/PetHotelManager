@@ -1,0 +1,101 @@
+@page "/appointments/details/{id:int}"
+@model PetHotelManager.Pages.Appointments.DetailsModel
+@{
+    ViewData["Title"] = $"Chi tiết Lịch hẹn #{Model.Appointment?.Id}";
+}
+
+@if (Model.Appointment != null)
+{
+    <div class="d-flex justify-content-between">
+        <h1>@ViewData["Title"]</h1>
+        <div>
+            <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
+        </div>
+    </div>
+    <hr />
+
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Ngày hẹn:</strong> @Model.Appointment.AppointmentDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <strong>Trạng thái:</strong>
+                    @{
+                        var statusClass = "bg-secondary";
+                        switch (Model.Appointment.Status?.ToLower())
+                        {
+                            case "pending": statusClass = "bg-warning text-dark"; break;
+                            case "accepted": statusClass = "bg-success"; break;
+                            case "rejected":
+                            case "cancelled": statusClass = "bg-danger"; break;
+                            case "completed": statusClass = "bg-primary"; break;
+                        }
+                    }
+                    <span class="badge @statusClass fs-6">@Model.Appointment.Status</span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5 class="card-title">Thông tin Khách hàng</h5>
+                    <p class="card-text">
+                        <strong>Tên:</strong> @Model.Appointment.CustomerName <br />
+                        <strong>Số điện thoại:</strong> @Model.Appointment.CustomerPhone
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <h5 class="card-title">Thông tin Thú cưng</h5>
+                    <p class="card-text">
+                        <strong>Tên:</strong> @Model.Appointment.PetName
+                    </p>
+                </div>
+            </div>
+            <hr />
+            <div class="row">
+                 <div class="col-md-6">
+                    <h5 class="card-title">Thông tin Dịch vụ</h5>
+                     <p class="card-text">
+                        <strong>Dịch vụ/Phòng:</strong> @(Model.Appointment.ServiceName ?? Model.Appointment.RoomName)
+                    </p>
+                </div>
+                 <div class="col-md-6">
+                    <h5 class="card-title">Ghi chú</h5>
+                    <p class="card-text">@Model.Appointment.Notes</p>
+                </div>
+            </div>
+        </div>
+        <div class="card-footer text-end">
+            @if (Model.Appointment.Status?.ToLower() == "pending")
+            {
+                <form method="post" class="d-inline">
+                    <button type="submit" asp-page-handler="Accept" asp-route-id="@Model.Appointment.Id" class="btn btn-success">
+                        <i class="bi bi-check-circle"></i> Chấp nhận
+                    </button>
+                </form>
+                <form method="post" class="d-inline">
+                    <button type="submit" asp-page-handler="Reject" asp-route-id="@Model.Appointment.Id" class="btn btn-danger">
+                        <i class="bi bi-x-circle"></i> Từ chối
+                    </button>
+                </form>
+            }
+
+            @if (Model.Appointment.Status?.ToLower() == "accepted")
+            {
+                <form method="post" class="d-inline">
+                    <button type="submit" asp-page-handler="Cancel" asp-route-id="@Model.Appointment.Id" class="btn btn-warning">
+                        <i class="bi bi-slash-circle"></i> Hủy lịch
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger" role="alert">
+        Không tìm thấy lịch hẹn.
+    </div>
+}

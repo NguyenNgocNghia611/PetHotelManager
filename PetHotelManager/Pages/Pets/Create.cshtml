@@ -1,0 +1,64 @@
+@page "/pets/create"
+@model PetHotelManager.Pages.Pets.CreateModel
+@{
+    ViewData["Title"] = "Thêm mới Thú cưng";
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
+<div class="row">
+    <div class="col-md-8">
+        <form method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Input.UserId" class="form-label"></label>
+                <select asp-for="Input.UserId" asp-items="Model.Customers" class="form-select">
+                    <option value="">-- Chọn khách hàng --</option>
+                </select>
+                <span asp-validation-for="Input.UserId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Name" class="form-label"></label>
+                <input asp-for="Input.Name" class="form-control" />
+                <span asp-validation-for="Input.Name" class="text-danger"></span>
+            </div>
+
+             <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.Species" class="form-label"></label>
+                    <input asp-for="Input.Species" class="form-control" />
+                </div>
+                 <div class="col-md-6 mb-3">
+                    <label asp-for="Input.Breed" class="form-label"></label>
+                    <input asp-for="Input.Breed" class="form-control" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.Age" class="form-label"></label>
+                    <input asp-for="Input.Age" class="form-control" type="number" />
+                </div>
+                 <div class="col-md-6 mb-3">
+                    <label asp-for="Input.Color" class="form-label"></label>
+                    <input asp-for="Input.Color" class="form-control" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.HealthStatus" class="form-label"></label>
+                <textarea asp-for="Input.HealthStatus" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.ImageFile" class="form-label"></label>
+                <input asp-for="Input.ImageFile" class="form-control" type="file" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Tạo mới</button>
+            <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
+        </form>
+    </div>
+</div>

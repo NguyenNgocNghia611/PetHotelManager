@@ -1,0 +1,46 @@
+@page "/rooms"
+@model PetHotelManager.Pages.Rooms.IndexModel
+@{
+    ViewData["Title"] = "Quản lý Phòng";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+    <h1>@ViewData["Title"]</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a asp-page="Create" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-plus-circle-fill"></i>
+            Thêm mới Phòng
+        </a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-sm">
+        <thead>
+        <tr>
+            <th scope="col">Số phòng</th>
+            <th scope="col">Loại phòng</th>
+            <th scope="col" class="text-end">Giá mỗi ngày</th>
+            <th scope="col">Trạng thái</th>
+            <th scope="col" class="text-end">Hành động</th>
+        </tr>
+        </thead>
+        <tbody>
+        @foreach (var room in Model.RoomList)
+        {
+            <tr>
+                <td>@room.RoomNumber</td>
+                <td>@room.RoomTypeName</td>
+                <td class="text-end">@room.PricePerDay.ToString("N0")</td>
+                <td>@room.Status</td>
+                <td class="text-end">
+                    <form method="post" class="d-inline">
+                        <a asp-page="./Edit" asp-route-id="@room.Id" class="btn btn-sm btn-outline-secondary">Sửa</a>
+                        <button type="submit" asp-page-handler="Delete" asp-route-id="@room.Id" class="btn btn-sm btn-outline-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa phòng này?')">Xóa</button>
+                    </form>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+</div>

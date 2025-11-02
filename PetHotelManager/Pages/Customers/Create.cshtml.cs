@@ -1,52 +1,26 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PetHotelManager.Models;
+using PetHotelManager.DTOs.Customer;
 using System.ComponentModel.DataAnnotations;
+using System.Text;
+using System.Text.Json;
 
 namespace PetHotelManager.Pages.Customers
 {
     [Authorize(Roles = "Admin,Staff")]
     public class CreateModel : PageModel
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly IHttpClientFactory _clientFactory;
 
-        public CreateModel(UserManager<ApplicationUser> userManager, RoleManager<IdentityRole> roleManager)
+        public CreateModel(IHttpClientFactory clientFactory)
         {
-            _userManager = userManager;
-            _roleManager = roleManager;
+            _clientFactory = clientFactory;
         }
 
-        [BindProperty]
-        public InputModel Input { get; set; }
+        [BindProperty] public CustomerCreateDto Input { get; set; }
 
-        public class InputModel
-        {
-            [Required(ErrorMessage = "Tên đăng nhập là bắt buộc")]
-            public string Username { get; set; }
-
-            [Required(ErrorMessage = "Mật khẩu là bắt buộc")]
-            [DataType(DataType.Password)]
-            [StringLength(100, ErrorMessage = "{0} phải dài từ {2} đến {1} ký tự.", MinimumLength = 8)]
-            public string Password { get; set; }
-
-            [Required(ErrorMessage = "Họ và tên là bắt buộc")]
-            public string FullName { get; set; }
-
-            [Required(ErrorMessage = "Email là bắt buộc")]
-            [EmailAddress]
-            public string Email { get; set; }
-
-            [Phone]
-            [Display(Name = "Số điện thoại")]
-            public string? PhoneNumber { get; set; }
-        }
-
-        public void OnGet()
-        {
-        }
+        public void OnGet() { }
 
         public async Task<IActionResult> OnPostAsync()
         {
@@ -55,43 +29,28 @@ namespace PetHotelManager.Pages.Customers
                 return Page();
             }
 
-            var userExists = await _userManager.FindByNameAsync(Input.Username);
-            if (userExists != null)
+            var client = _clientFactory.CreateClient("ApiClient");
+            var token  = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
+            if (token != null)
             {
-                ModelState.AddModelError(string.Empty, "Tên đăng nhập đã tồn tại.");
-                return Page();
+                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
             }
 
-            var newCustomer = new ApplicationUser
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var content = new StringContent(JsonSerializer.Serialize(Input), Encoding.UTF8, "application/json");
+
+            var response = await client.PostAsync($"{baseUrl}/api/customermanagement/add", content);
+
+            if (response.IsSuccessStatusCode)
             {
-                UserName = Input.Username,
-                Email = Input.Email,
-                FullName = Input.FullName,
-                PhoneNumber = Input.PhoneNumber,
-                IsActive = true,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            var result = await _userManager.CreateAsync(newCustomer, Input.Password);
-
-            if (result.Succeeded)
-            {
-                if (!await _roleManager.RoleExistsAsync("Customer"))
-                {
-                    await _roleManager.CreateAsync(new IdentityRole("Customer"));
-                }
-
-                await _userManager.AddToRoleAsync(newCustomer, "Customer");
-
                 return RedirectToPage("./Index");
             }
-
-            foreach (var error in result.Errors)
+            else
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ModelState.AddModelError(string.Empty, $"Lỗi từ API: {errorContent}");
+                return Page();
             }
-
-            return Page();
         }
     }
 }

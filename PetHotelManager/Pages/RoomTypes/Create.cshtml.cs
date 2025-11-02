@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PetHotelManager.DTOs.Admin;
-using System.Text;
-using System.Text.Json;
+using PetHotelManager.DTOs.RoomTypes;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
 
-namespace PetHotelManager.Pages.Admin.Users
+namespace PetHotelManager.Pages.RoomTypes
 {
     [Authorize(Roles = "Admin")]
     public class CreateModel : PageModel
@@ -17,18 +18,14 @@ namespace PetHotelManager.Pages.Admin.Users
             _clientFactory = clientFactory;
         }
 
-        [BindProperty] public AdminCreateUserDto Input { get; set; }
-
-        public List<string> Roles { get; set; } = new List<string> { "Staff", "Doctor" };
+        [BindProperty]
+        public CreateRoomTypeDto Input { get; set; }
 
         public void OnGet() { }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
-            {
-                return Page();
-            }
+            if (!ModelState.IsValid) return Page();
 
             var client = _clientFactory.CreateClient("ApiClient");
             var token  = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
@@ -37,21 +34,16 @@ namespace PetHotelManager.Pages.Admin.Users
                 client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
             }
 
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var content = new StringContent(JsonSerializer.Serialize(Input), Encoding.UTF8, "application/json");
-
-            var response = await client.PostAsync($"{baseUrl}/api/admin/users", content);
+            var baseUrl  = $"{Request.Scheme}://{Request.Host}";
+            var response = await client.PostAsJsonAsync($"{baseUrl}/api/roomtypes", Input);
 
             if (response.IsSuccessStatusCode)
             {
                 return RedirectToPage("./Index");
             }
-            else
-            {
-                var errorContent = await response.Content.ReadAsStringAsync();
-                ModelState.AddModelError(string.Empty, $"Lỗi từ API: {errorContent}");
-                return Page();
-            }
+
+            ModelState.AddModelError(string.Empty, "Lỗi khi tạo loại phòng từ API.");
+            return Page();
         }
     }
 }

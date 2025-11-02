@@ -1,0 +1,43 @@
+@page "/rooms/create"
+@model PetHotelManager.Pages.Rooms.CreateModel
+@{
+    ViewData["Title"] = "Thêm mới Phòng";
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Input.RoomNumber" class="form-label">Số phòng</label>
+                <input asp-for="Input.RoomNumber" class="form-control" />
+                <span asp-validation-for="Input.RoomNumber" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.RoomTypeId" class="form-label">Loại phòng</label>
+                <select asp-for="Input.RoomTypeId" asp-items="Model.RoomTypes" class="form-select">
+                    <option value="">-- Chọn loại phòng --</option>
+                </select>
+                <span asp-validation-for="Input.RoomTypeId" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Status" class="form-label">Trạng thái</label>
+                <select asp-for="Input.Status" class="form-select">
+                    <option value="Available">Available (Trống)</option>
+                    <option value="Occupied">Occupied (Có khách)</option>
+                    <option value="Cleaning">Cleaning (Đang dọn)</option>
+                    <option value="Maintenance">Maintenance (Bảo trì)</option>
+                </select>
+                <span asp-validation-for="Input.Status" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Tạo mới</button>
+            <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
+        </form>
+    </div>
+</div>

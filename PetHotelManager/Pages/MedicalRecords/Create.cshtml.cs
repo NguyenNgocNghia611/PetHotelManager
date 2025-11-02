@@ -1,14 +1,17 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using PetHotelManager.DTOs.Pets;
 using PetHotelManager.DTOs.Product;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Threading.Tasks;
 
-namespace PetHotelManager.Pages.Products
+namespace PetHotelManager.Pages.MedicalRecords
 {
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin,Staff,Doctor")]
     public class CreateModel : PageModel
     {
         private readonly IHttpClientFactory _clientFactory;
@@ -18,15 +21,11 @@ namespace PetHotelManager.Pages.Products
             _clientFactory = clientFactory;
         }
 
-        [BindProperty]
-        public CreateProductDto Input { get; set; }
+        public SelectList Pets     { get; set; }
+        public SelectList Products { get; set; }
 
-        public void OnGet() { }
-
-        public async Task<IActionResult> OnPostAsync()
+        public async Task OnGetAsync()
         {
-            if (!ModelState.IsValid) return Page();
-
             var client = _clientFactory.CreateClient("ApiClient");
             var token  = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
             if (token != null)
@@ -34,17 +33,14 @@ namespace PetHotelManager.Pages.Products
                 client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
             }
 
-            var baseUrl  = $"{Request.Scheme}://{Request.Host}";
-            var response = await client.PostAsJsonAsync($"{baseUrl}/api/products", Input);
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
 
-            if (response.IsSuccessStatusCode)
-            {
-                return RedirectToPage("./Index");
-            }
+            var pets = await client.GetFromJsonAsync<List<PetListDto>>($"{baseUrl}/api/pets") ?? new List<PetListDto>();
+            Pets = new SelectList(pets, "Id", "Name");
 
-            var errorContent = await response.Content.ReadAsStringAsync();
-            ModelState.AddModelError(string.Empty, $"Lỗi từ API: {errorContent}");
-            return Page();
+            var products = await client.GetFromJsonAsync<List<ProductDto>>($"{baseUrl}/api/products") ?? new List<ProductDto>();
+            Products = new SelectList(products, "Id", "Name");
         }
+
     }
 }

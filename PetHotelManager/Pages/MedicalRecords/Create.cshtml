@@ -1,0 +1,165 @@
+@page "/medical-records/create"
+@model PetHotelManager.Pages.MedicalRecords.CreateModel
+@{
+    ViewData["Title"] = "Tạo Bệnh án mới";
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
+
+<form id="recordForm">
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="petSelect" class="form-label">Thú cưng</label>
+            <select id="petSelect" class="form-select" asp-items="Model.Pets">
+                <option value="">-- Chọn thú cưng --</option>
+            </select>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="examinationDate" class="form-label">Ngày khám</label>
+            <input type="datetime-local" id="examinationDate" class="form-control" />
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="symptoms" class="form-label">Triệu chứng</label>
+            <textarea id="symptoms" class="form-control" rows="3"></textarea>
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="diagnosis" class="form-label">Chẩn đoán</label>
+            <textarea id="diagnosis" class="form-control" rows="3"></textarea>
+        </div>
+    </div>
+
+    <hr />
+
+    <h4>Đơn thuốc</h4>
+    <div class="row align-items-end g-3 mb-3 p-3 border rounded">
+        <div class="col-md-4">
+            <label class="form-label">Thuốc</label>
+            <select id="productSelect" class="form-select" asp-items="Model.Products">
+                <option value="">-- Chọn thuốc --</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Số lượng</label>
+            <input type="number" id="itemQuantity" class="form-control" value="1" min="1" />
+        </div>
+         <div class="col-md-4">
+            <label class="form-label">Liều lượng/Cách dùng</label>
+            <input type="text" id="itemDosage" class="form-control" placeholder="VD: 1 viên/ngày, sau bữa ăn" />
+        </div>
+        <div class="col-md-2">
+            <button type="button" id="addItemBtn" class="btn btn-success w-100">Thêm thuốc</button>
+        </div>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Thuốc</th>
+                <th>Liều lượng/Cách dùng</th>
+                <th class="text-end">Số lượng</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="prescriptionDetailsBody">
+        </tbody>
+    </table>
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Lưu Bệnh án</button>
+        <a asp-page="/Index" class="btn btn-secondary">Quay lại Dashboard</a>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Nút "Thêm thuốc"
+            $('#addItemBtn').on('click', function () {
+                const quantity = parseInt($('#itemQuantity').val());
+                const productId = $('#productSelect').val();
+                const dosage = $('#itemDosage').val();
+
+                if (!productId || quantity <= 0) {
+                    alert('Vui lòng chọn thuốc và nhập số lượng hợp lệ.');
+                    return;
+                }
+
+                if ($(`#prescriptionDetailsBody tr[data-id='${productId}']`).length > 0) {
+                    alert('Thuốc này đã có trong đơn.');
+                    return;
+                }
+
+                const productName = $('#productSelect').find('option:selected').text();
+
+                const row = `
+                    <tr data-id="${productId}" data-quantity="${quantity}" data-dosage="${dosage}">
+                        <td>${productName}</td>
+                        <td>${dosage}</td>
+                        <td class="text-end">${quantity}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-danger remove-item-btn">Xóa</button>
+                        </td>
+                    </tr>`;
+
+                $('#prescriptionDetailsBody').append(row);
+            });
+
+            // Nút "Xóa" dòng
+            $('#prescriptionDetailsBody').on('click', '.remove-item-btn', function () {
+                $(this).closest('tr').remove();
+            });
+
+            // Xử lý Submit Form
+            $('#recordForm').on('submit', function (e) {
+                e.preventDefault();
+
+                const prescriptions = [];
+                $('#prescriptionDetailsBody tr').each(function () {
+                    prescriptions.push({
+                        productId: parseInt($(this).data('id')),
+                        quantity: parseInt($(this).data('quantity')),
+                        dosage: $(this).data('dosage')
+                    });
+                });
+
+                const recordData = {
+                    petId: parseInt($('#petSelect').val()),
+                    symptoms: $('#symptoms').val(),
+                    diagnosis: $('#diagnosis').val(),
+                    examinationDate: new Date($('#examinationDate').val()).toISOString(),
+                    prescriptions: prescriptions
+                };
+
+                if (!recordData.petId) {
+                    alert('Vui lòng chọn thú cưng.');
+                    return;
+                }
+
+                const cookie = document.cookie.split('; ').find(row => row.startsWith('.AspNetCore.Identity.Application='));
+
+                fetch('/api/medicalrecords', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(recordData)
+                })
+                .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                .then(obj => {
+                    if (obj.status >= 200 && obj.status < 300) {
+                        alert('Tạo bệnh án thành công!');
+                        window.location.href = `/pets/details/${recordData.petId}`;
+                    } else {
+                         throw new Error(obj.body.message || JSON.stringify(obj.body));
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi:', error);
+                    alert('Đã xảy ra lỗi khi tạo bệnh án. Chi tiết: ' + error.message);
+                });
+            });
+        });
+    </script>
+}

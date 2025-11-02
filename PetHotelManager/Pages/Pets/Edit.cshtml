@@ -1,0 +1,77 @@
+@page "/pets/edit/{id:int}"
+@model PetHotelManager.Pages.Pets.EditModel
+@{
+    ViewData["Title"] = "Chỉnh sửa Thú cưng";
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
+<div class="row">
+    <div class="col-md-8">
+        <form method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <input type="hidden" asp-for="Input.Id" />
+
+            <div class="row">
+                <div class="col-md-9">
+                    <div class="mb-3">
+                        <label asp-for="Input.Name" class="form-label">Tên thú cưng</label>
+                        <input asp-for="Input.Name" class="form-control" />
+                        <span asp-validation-for="Input.Name" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Chủ sở hữu</label>
+                        <select asp-items="Model.Customers" class="form-select" disabled>
+                        </select>
+                        <small class="form-text text-muted">Việc thay đổi chủ sở hữu cần được thực hiện qua chức năng riêng.</small>
+                    </div>
+                </div>
+                <div class="col-md-3 text-center">
+                    <label class="form-label">Ảnh hiện tại</label>
+                    <img id="imagePreview" src="@(Model.ExistingImageUrl ?? "/images/placeholder.png")" alt="Ảnh thú cưng" class="img-fluid rounded mb-2" style="max-height: 150px;"/>
+                </div>
+            </div>
+
+             <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.Species" class="form-label"></label>
+                    <input asp-for="Input.Species" class="form-control" />
+                </div>
+                 <div class="col-md-6 mb-3">
+                    <label asp-for="Input.Breed" class="form-label"></label>
+                    <input asp-for="Input.Breed" class="form-control" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label asp-for="Input.Age" class="form-label"></label>
+                    <input asp-for="Input.Age" class="form-control" type="number" />
+                </div>
+                 <div class="col-md-6 mb-3">
+                    <label asp-for="Input.Color" class="form-label"></label>
+                    <input asp-for="Input.Color" class="form-control" />
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.HealthStatus" class="form-label">Tình trạng sức khỏe</label>
+                <textarea asp-for="Input.HealthStatus" class="form-control" rows="3"></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.ImageFile" class="form-label">Tải lên ảnh mới (để thay đổi)</label>
+                <input asp-for="Input.ImageFile" class="form-control" type="file" onchange="document.getElementById('imagePreview').src = window.URL.createObjectURL(this.files[0])" />
+            </div>
+
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

@@ -1,0 +1,101 @@
+@page "/pets/details/{id:int}"
+@model PetHotelManager.Pages.Pets.DetailsModel
+@{
+    ViewData["Title"] = "Chi tiết Thú cưng";
+}
+
+@if (Model.Pet != null)
+{
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+        <h1>@ViewData["Title"]: @Model.Pet.Name</h1>
+        <div>
+            <a asp-page="./Edit" asp-route-id="@Model.Pet.Id" class="btn btn-secondary">Chỉnh sửa</a>
+            <a asp-page="./Index" class="btn btn-outline-secondary">Quay lại danh sách</a>
+        </div>
+    </div>
+    <hr />
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-3 text-center">
+                    <img src="@(Model.Pet.ImageUrl ?? "/images/placeholder.png")" class="img-fluid rounded" alt="Ảnh thú cưng">
+                </div>
+                <div class="col-md-9">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Loài:</strong> @Model.Pet.Species</p>
+                            <p><strong>Giống:</strong> @Model.Pet.Breed</p>
+                            <p><strong>Tuổi:</strong> @Model.Pet.Age</p>
+                            <p><strong>Màu sắc:</strong> @Model.Pet.Color</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Chủ sở hữu:</strong> @Model.Pet.OwnerName</p>
+                            <p><strong>SĐT Chủ:</strong> @Model.Pet.OwnerPhone</p>
+                            <p><strong>Tình trạng sức khỏe:</strong></p>
+                            <p>@Model.Pet.HealthStatus</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <button class="nav-link active" id="nav-medical-tab" data-bs-toggle="tab" data-bs-target="#nav-medical" type="button" role="tab">Lịch sử Khám bệnh (@Model.MedicalRecords.Count)</button>
+            <button class="nav-link" id="nav-appointment-tab" data-bs-toggle="tab" data-bs-target="#nav-appointment" type="button" role="tab">Lịch sử Lịch hẹn (@Model.Appointments.Count)</button>
+        </div>
+    </nav>
+    <div class="tab-content" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="nav-medical" role="tabpanel" tabindex="0">
+            <div class="table-responsive mt-3">
+                <table class="table table-sm">
+                    <thead>
+                        <tr><th>Ngày khám</th><th>Chẩn đoán</th><th>Bác sĩ</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var record in Model.MedicalRecords)
+                        {
+                            <tr>
+                                <td>@record.ExaminationDate.ToLocalTime().ToString("dd/MM/yyyy")</td>
+                                <td>@record.Diagnosis</td>
+                                <td>@record.VeterinarianName</td>
+                                <td class="text-end">
+                                    <a href="#" class="btn btn-sm btn-outline-info">Xem chi tiết</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <!-- Tab Lịch sử Lịch hẹn -->
+        <div class="tab-pane fade" id="nav-appointment" role="tabpanel" tabindex="0">
+             <div class="table-responsive mt-3">
+                <table class="table table-sm">
+                    <thead>
+                        <tr><th>Ngày hẹn</th><th>Dịch vụ/Phòng</th><th>Trạng thái</th><th></th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach(var appt in Model.Appointments)
+                        {
+                             <tr>
+                                <td>@appt.AppointmentDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@(appt.ServiceName ?? appt.RoomName)</td>
+                                <td>@appt.Status</td>
+                                <td class="text-end">
+                                    <a asp-page="/Appointments/Details" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-info">Xem chi tiết</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger">Không tìm thấy thông tin thú cưng.</div>
+}

@@ -1,61 +1,50 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PetHotelManager.Data;
-using PetHotelManager.Models;
-using System.ComponentModel.DataAnnotations;
+using PetHotelManager.DTOs.Service;
+using System.Text;
+using System.Text.Json;
 
 namespace PetHotelManager.Pages.Services
 {
     [Authorize(Roles = "Admin")]
     public class CreateModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IHttpClientFactory _clientFactory;
 
-        public CreateModel(ApplicationDbContext context)
+        public CreateModel(IHttpClientFactory clientFactory)
         {
-            _context = context;
+            _clientFactory = clientFactory;
         }
 
         [BindProperty]
-        public InputModel Input { get; set; }
+        public CreateServiceDto Input { get; set; }
 
-        public class InputModel
-        {
-            [Required(ErrorMessage = "Tên dịch vụ là bắt buộc.")]
-            public string Name { get;     set; }
-            public string Category { get; set; }
-
-            [Range(0, double.MaxValue, ErrorMessage = "Giá phải là một số không âm.")]
-            public decimal Price { get; set; }
-
-            [Required(ErrorMessage = "Đơn vị tính là bắt buộc.")]
-            public string Unit { get; set; }
-        }
-
-        public void OnGet()
-        {
-        }
+        public void OnGet() { }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid) return Page();
+
+            var client = _clientFactory.CreateClient("ApiClient");
+            var token  = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
+            if (token != null)
             {
-                return Page();
+                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
             }
 
-            var service = new Service
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var content = new StringContent(JsonSerializer.Serialize(Input), Encoding.UTF8, "application/json");
+
+            var response = await client.PostAsync($"{baseUrl}/api/services", content);
+
+            if (response.IsSuccessStatusCode)
             {
-                Name     = Input.Name,
-                Category = Input.Category,
-                Price    = Input.Price,
-                Unit     = Input.Unit
-            };
+                return RedirectToPage("./Index");
+            }
 
-            _context.Services.Add(service);
-            await _context.SaveChangesAsync();
-
-            return RedirectToPage("./Index");
+            ModelState.AddModelError(string.Empty, "Lỗi khi tạo dịch vụ từ API.");
+            return Page();
         }
     }
 }

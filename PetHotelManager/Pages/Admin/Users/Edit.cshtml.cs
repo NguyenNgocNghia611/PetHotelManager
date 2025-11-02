@@ -1,82 +1,79 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PetHotelManager.Models;
-using System.ComponentModel.DataAnnotations;
+using PetHotelManager.DTOs.Admin;
+using System.Text;
+using System.Text.Json;
 
 namespace PetHotelManager.Pages.Admin.Users
 {
+    using PetHotelManager.DTOs.Admin;
+
     [Authorize(Roles = "Admin")]
     public class EditModel : PageModel
     {
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IHttpClientFactory _clientFactory;
 
-        public EditModel(UserManager<ApplicationUser> userManager)
+        public EditModel(IHttpClientFactory clientFactory)
         {
-            _userManager = userManager;
+            _clientFactory = clientFactory;
         }
 
-        [BindProperty]
-        public InputModel Input { get; set; }
+        [BindProperty] public InputModel Input { get; set; }
 
         public List<string> Roles { get; set; } = new List<string> { "Staff", "Doctor", "Admin" };
 
         public class InputModel
         {
-            [Required]
-            public string Id { get; set; }
-
-            [Display(Name = "Tên đăng nhập")]
-            public string Username { get; set; }
-
-            [Required(ErrorMessage = "Họ và tên là bắt buộc")]
-            [Display(Name = "Họ và tên")]
-            public string FullName { get; set; }
-
-            [Required(ErrorMessage = "Email là bắt buộc")]
-            [EmailAddress]
-            public string Email { get; set; }
-
-            [Phone]
-            [Display(Name = "Số điện thoại")]
+            public string  Id          { get; set; }
+            public string  Username    { get; set; }
+            public string  FullName    { get; set; }
+            public string  Email       { get; set; }
             public string? PhoneNumber { get; set; }
+            public string  Role        { get; set; }
+            public bool    IsActive    { get; set; }
+        }
 
-            [Required(ErrorMessage = "Vai trò là bắt buộc")]
-            [Display(Name = "Vai trò")]
-            public string Role { get; set; }
-
-            [Display(Name = "Trạng thái hoạt động")]
-            public bool IsActive { get; set; }
+        private async Task<HttpClient> GetAuthenticatedClientAsync()
+        {
+            var client = _clientFactory.CreateClient("ApiClient");
+            var token  = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
+            if (token != null)
+            {
+                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+            }
+            return client;
         }
 
         public async Task<IActionResult> OnGetAsync(string id)
         {
-            if (id == null)
+            if (id == null) return NotFound();
+
+            var client   = await GetAuthenticatedClientAsync();
+            var baseUrl  = $"{Request.Scheme}://{Request.Host}";
+            var response = await client.GetAsync($"{baseUrl}/api/admin/users/{id}");
+
+            if (response.IsSuccessStatusCode)
             {
-                return NotFound();
+                var stream  = await response.Content.ReadAsStreamAsync();
+                var userDto = await JsonSerializer.DeserializeAsync<UserManagementDto>(stream, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                if (userDto == null) return NotFound();
+
+                Input = new InputModel
+                {
+                    Id          = userDto.Id,
+                    Username    = userDto.UserName,
+                    FullName    = userDto.FullName,
+                    Email       = userDto.Email,
+                    PhoneNumber = userDto.PhoneNumber,
+                    IsActive    = userDto.IsActive,
+                    Role        = userDto.Roles.FirstOrDefault() ?? string.Empty
+                };
+                return Page();
             }
 
-            var user = await _userManager.FindByIdAsync(id);
-            if (user == null)
-            {
-                return NotFound();
-            }
-
-            var userRoles = await _userManager.GetRolesAsync(user);
-
-            Input = new InputModel
-            {
-                Id = user.Id,
-                Username = user.UserName,
-                FullName = user.FullName,
-                Email = user.Email,
-                PhoneNumber = user.PhoneNumber,
-                IsActive = user.IsActive,
-                Role = userRoles.FirstOrDefault()
-            };
-
-            return Page();
+            return NotFound();
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -86,35 +83,30 @@ namespace PetHotelManager.Pages.Admin.Users
                 return Page();
             }
 
-            var user = await _userManager.FindByIdAsync(Input.Id);
-            if (user == null)
+            var updateUserDto = new AdminUpdateUserDto
             {
-                return NotFound();
-            }
+                FullName    = Input.FullName,
+                Email       = Input.Email,
+                PhoneNumber = Input.PhoneNumber,
+                Role        = Input.Role
+            };
 
-            user.FullName = Input.FullName;
-            user.Email = Input.Email;
-            user.PhoneNumber = Input.PhoneNumber;
-            user.IsActive = Input.IsActive;
+            var client  = await GetAuthenticatedClientAsync();
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var content = new StringContent(JsonSerializer.Serialize(updateUserDto), Encoding.UTF8, "application/json");
 
-            var updateResult = await _userManager.UpdateAsync(user);
+            var response = await client.PutAsync($"{baseUrl}/api/admin/users/{Input.Id}", content);
 
-            if (updateResult.Succeeded)
+            if (response.IsSuccessStatusCode)
             {
-                var currentRoles = await _userManager.GetRolesAsync(user);
-                await _userManager.RemoveFromRolesAsync(user, currentRoles);
-                await _userManager.AddToRoleAsync(user, Input.Role);
-
                 return RedirectToPage("./Index");
             }
-
-            foreach (var error in updateResult.Errors)
+            else
             {
-                ModelState.AddModelError(string.Empty, error.Description);
+                var errorContent = await response.Content.ReadAsStringAsync();
+                ModelState.AddModelError(string.Empty, $"Lỗi từ API: {errorContent}");
+                return Page();
             }
-
-            Input.Username = user.UserName;
-            return Page();
         }
     }
 }

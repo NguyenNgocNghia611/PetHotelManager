@@ -1,0 +1,140 @@
+@page "/inventory/receive"
+@model PetHotelManager.Pages.Inventory.ReceiveModel
+@{
+    ViewData["Title"] = "Tạo Phiếu Nhập kho";
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
+
+<form id="receiptForm">
+    <div class="row">
+        <div class="col-md-6 mb-3">
+             <label for="supplier" class="form-label">Nhà cung cấp / Ghi chú</label>
+             <input type="text" id="supplier" class="form-control" placeholder="Ví dụ: Công ty ABC, Nhập hàng đợt 1..." />
+        </div>
+    </div>
+
+    <hr />
+
+    <h4>Chi tiết Phiếu nhập</h4>
+    <div class="row align-items-end g-3 mb-3 p-3 border rounded">
+        <div class="col-md-6">
+            <label class="form-label">Sản phẩm</label>
+            <select id="productSelect" class="form-select" asp-items="Model.Products">
+                <option value="">-- Chọn sản phẩm --</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Số lượng nhập</label>
+            <input type="number" id="itemQuantity" class="form-control" value="1" min="1" />
+        </div>
+        <div class="col-md-3">
+            <button type="button" id="addItemBtn" class="btn btn-success w-100">Thêm vào phiếu</button>
+        </div>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Sản phẩm</th>
+                <th class="text-end">Số lượng</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="receiptDetailsBody">
+        </tbody>
+    </table>
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Xác nhận Nhập kho</button>
+        <a asp-page="/Index" class="btn btn-secondary">Quay lại Dashboard</a>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            // Nút "Thêm vào phiếu"
+            $('#addItemBtn').on('click', function () {
+                const quantity = parseInt($('#itemQuantity').val());
+                const productId = $('#productSelect').val();
+
+                if (!productId || quantity <= 0) {
+                    alert('Vui lòng chọn sản phẩm và nhập số lượng hợp lệ.');
+                    return;
+                }
+
+                if ($(`#receiptDetailsBody tr[data-id='${productId}']`).length > 0) {
+                    alert('Sản phẩm này đã có trong phiếu nhập.');
+                    return;
+                }
+
+                const productName = $('#productSelect').find('option:selected').text();
+
+                const row = `
+                    <tr data-id="${productId}" data-quantity="${quantity}">
+                        <td>${productName}</td>
+                        <td class="text-end">${quantity}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-danger remove-item-btn">Xóa</button>
+                        </td>
+                    </tr>`;
+
+                $('#receiptDetailsBody').append(row);
+            });
+
+            $('#receiptDetailsBody').on('click', '.remove-item-btn', function () {
+                $(this).closest('tr').remove();
+            });
+
+            $('#receiptForm').on('submit', function (e) {
+                e.preventDefault();
+
+                const lines = [];
+                $('#receiptDetailsBody tr').each(function () {
+                    const productId = parseInt($(this).data('id'));
+                    const quantity = parseInt($(this).data('quantity'));
+                    lines.push({ productId: productId, quantity: quantity, notes: null });
+                });
+
+                if (lines.length === 0) {
+                    alert('Phiếu nhập phải có ít nhất một sản phẩm.');
+                    return;
+                }
+
+                const receiptData = {
+                    supplier: $('#supplier').val(),
+                    lines: lines
+                };
+
+                const cookie = document.cookie.split('; ').find(row => row.startsWith('.AspNetCore.Identity.Application='));
+
+                fetch('/api/inventory/receive', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cookie': cookie || ''
+                    },
+                    body: JSON.stringify(receiptData)
+                })
+                .then(response => response.json().then(data => ({ status: response.status, body: data })))
+                .then(obj => {
+                    if (obj.status === 200) {
+                        alert('Nhập kho thành công!');
+                        // Reset form
+                        $('#supplier').val('');
+                        $('#receiptDetailsBody').empty();
+                    } else {
+                         throw new Error(obj.body.message || 'Lỗi không xác định');
+                    }
+                })
+                .catch(error => {
+                    console.error('Lỗi:', error);
+                    alert('Đã xảy ra lỗi khi nhập kho. Chi tiết: ' + error.message);
+                });
+            });
+        });
+    </script>
+}

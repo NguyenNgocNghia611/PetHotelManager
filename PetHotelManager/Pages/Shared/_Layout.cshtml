@@ -57,12 +57,15 @@
         <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">Pet Hotel Manager</a>
         <div class="navbar-nav">
             <div class="nav-item text-nowrap">
-                @if (User.Identity.IsAuthenticated)
+                @if (User.Identity?.IsAuthenticated ?? false)
                 {
                     <span class="px-3 text-white">Chào, @User.Identity.Name!</span>
-                    <a class="px-3 text-white" asp-page="/Account/Logout">Đăng xuất</a>
+                    <form method="post" asp-page="/Account/Logout" class="d-inline">
+                        <button type="submit" class="btn btn-link px-3 text-white">Đăng xuất</button>
+                    </form>
                 }
             </div>
+
         </div>
     </header>
 
@@ -107,13 +110,51 @@
                                 Quản lý sản phẩm
                             </a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Pets/Index">
+                                <i class="bi bi-receipt"></i>
+                                Quản lý thú cưng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Appointments/Index">
+                                <i class="bi bi-receipt"></i>
+                                Quản lý lịch hẹn
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/RoomTypes/Index">
+                                <i class="bi bi-receipt"></i>
+                                Quản lý loại phòng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Rooms/Index">
+                                <i class="bi bi-receipt"></i>
+                                Quản lý phòng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/Inventory/Receive">
+                                <i class="bi bi-receipt"></i>
+                                Quản lý kho hàng
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" asp-page="/MedicalRecords/Create">
+                                <i class="bi bi-receipt"></i>
+                                Quản lý hồ sơ sức khỏe
+                            </a>
+                        </li>
                     </ul>
                 </div>
             </nav>
 
             <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
                 <div class="pt-3 pb-2 mb-3 border-bottom">
+                    @*
                     <h1 class="h2">@ViewData["Title"]</h1>
+                *@
                 </div>
                 @RenderBody()
             </main>

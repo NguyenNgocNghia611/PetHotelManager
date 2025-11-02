@@ -1,0 +1,36 @@
+@page "/room-types/create"
+@model PetHotelManager.Pages.RoomTypes.CreateModel
+@{
+    ViewData["Title"] = "Thêm mới Loại phòng";
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Input.TypeName" class="form-label">Tên Loại phòng</label>
+                <input asp-for="Input.TypeName" class="form-control" />
+                <span asp-validation-for="Input.TypeName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Description" class="form-label"></label>
+                <textarea asp-for="Input.Description" class="form-control" rows="3"></textarea>
+                <span asp-validation-for="Input.Description" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.PricePerDay" class="form-label">Giá mỗi ngày</label>
+                <input asp-for="Input.PricePerDay" class="form-control" type="number" step="1000" />
+                <span asp-validation-for="Input.PricePerDay" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Tạo mới</button>
+            <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
+        </form>
+    </div>
+</div>

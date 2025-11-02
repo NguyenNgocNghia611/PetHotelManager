@@ -1,48 +1,43 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PetHotelManager.Data;
-using PetHotelManager.Models;
-using System.ComponentModel.DataAnnotations;
+using PetHotelManager.DTOs.Product;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
 
 namespace PetHotelManager.Pages.Products
 {
     [Authorize(Roles = "Admin,Staff")]
     public class EditModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IHttpClientFactory _clientFactory;
 
-        public EditModel(ApplicationDbContext context)
+        public EditModel(IHttpClientFactory clientFactory)
         {
-            _context = context;
+            _clientFactory = clientFactory;
         }
 
         [BindProperty]
-        public InputModel Input { get; set; }
-
-        public class InputModel
-        {
-            public int Id { get; set; }
-            [Required] public string Name { get; set; }
-            [Range(0, double.MaxValue)] public decimal Price { get; set; }
-            [Display(Name = "Số lượng tồn kho")]
-            [Range(0, int.MaxValue)] public int StockQuantity { get; set; }
-            [Required] public string Unit { get; set; }
-        }
+        public UpdateProductDto Input { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var product = await _context.Products.FindAsync(id);
-            if (product == null) return NotFound();
+            var client = _clientFactory.CreateClient("ApiClient");
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var productDto = await client.GetFromJsonAsync<ProductDto>($"{baseUrl}/api/products/{id}");
 
-            Input = new InputModel
+            if (productDto == null) return NotFound();
+
+            Input = new UpdateProductDto
             {
-                Id = product.Id,
-                Name = product.Name,
-                Price = product.Price,
-                StockQuantity = product.StockQuantity,
-                Unit = product.Unit
+                Id = productDto.Id,
+                Name = productDto.Name,
+                Price = productDto.Price,
+                StockQuantity = productDto.StockQuantity,
+                Unit = productDto.Unit
             };
+
             return Page();
         }
 
@@ -50,16 +45,24 @@ namespace PetHotelManager.Pages.Products
         {
             if (!ModelState.IsValid) return Page();
 
-            var productToUpdate = await _context.Products.FindAsync(Input.Id);
-            if (productToUpdate == null) return NotFound();
+            var client = _clientFactory.CreateClient("ApiClient");
+            var token = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
+            if (token != null)
+            {
+                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+            }
 
-            productToUpdate.Name = Input.Name;
-            productToUpdate.Price = Input.Price;
-            productToUpdate.StockQuantity = Input.StockQuantity;
-            productToUpdate.Unit = Input.Unit;
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var response = await client.PutAsJsonAsync($"{baseUrl}/api/products/{Input.Id}", Input);
 
-            await _context.SaveChangesAsync();
-            return RedirectToPage("./Index");
+            if (response.IsSuccessStatusCode)
+            {
+                return RedirectToPage("./Index");
+            }
+
+            var errorContent = await response.Content.ReadAsStringAsync();
+            ModelState.AddModelError(string.Empty, $"Lỗi từ API: {errorContent}");
+            return Page();
         }
     }
 }

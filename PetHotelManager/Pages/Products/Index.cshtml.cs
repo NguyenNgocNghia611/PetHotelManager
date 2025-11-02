@@ -1,38 +1,50 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using PetHotelManager.Data;
-using PetHotelManager.Models;
+using PetHotelManager.DTOs.Product;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
 
 namespace PetHotelManager.Pages.Products
 {
     [Authorize(Roles = "Admin,Staff")]
     public class IndexModel : PageModel
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IHttpClientFactory _clientFactory;
 
-        public IndexModel(ApplicationDbContext context)
+        public IndexModel(IHttpClientFactory clientFactory)
         {
-            _context = context;
+            _clientFactory = clientFactory;
         }
 
-        public IList<Product> ProductList { get;set; }
+        public IList<ProductDto> ProductList { get; set; } = new List<ProductDto>();
+
+        private HttpClient GetAuthenticatedClient()
+        {
+            var client = _clientFactory.CreateClient("ApiClient");
+            var token  = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
+            if (token != null)
+            {
+                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+            }
+            return client;
+        }
 
         public async Task OnGetAsync()
         {
-            ProductList = await _context.Products.ToListAsync();
+            var client  = GetAuthenticatedClient();
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            ProductList = await client.GetFromJsonAsync<List<ProductDto>>($"{baseUrl}/api/products") ?? new List<ProductDto>();
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
-            var product = await _context.Products.FindAsync(id);
+            var client  = GetAuthenticatedClient();
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
 
-            if (product != null)
-            {
-                _context.Products.Remove(product);
-                await _context.SaveChangesAsync();
-            }
+            await client.DeleteAsync($"{baseUrl}/api/products/{id}");
 
             return RedirectToPage();
         }

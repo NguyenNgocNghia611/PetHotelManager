@@ -1,73 +1,64 @@
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.EntityFrameworkCore;
-using PetHotelManager.Models;
 using PetHotelManager.DTOs.Admin;
+using System.Text.Json;
 
 namespace PetHotelManager.Pages.Admin.Users
 {
-    using PetHotelManager.DTOs.Admin;
-
     [Authorize(Roles = "Admin")]
     public class IndexModel : PageModel
     {
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IHttpClientFactory _clientFactory;
 
-        public IndexModel(UserManager<ApplicationUser> userManager)
+        public IndexModel(IHttpClientFactory clientFactory)
         {
-            _userManager = userManager;
+            _clientFactory = clientFactory;
         }
 
         public IList<UserManagementDto> UserList { get; set; } = new List<UserManagementDto>();
 
+        private async Task<HttpClient> GetAuthenticatedClientAsync()
+        {
+            var client = _clientFactory.CreateClient("ApiClient");
+            var token  = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
+            if (token != null)
+            {
+                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+            }
+            return client;
+        }
+
         public async Task OnGetAsync()
         {
-            var users = await _userManager.Users.ToListAsync();
-            foreach (var user in users)
+            var client  = await GetAuthenticatedClientAsync();
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+
+            var response = await client.GetAsync($"{baseUrl}/api/admin/users");
+
+            if (response.IsSuccessStatusCode)
             {
-                UserList.Add(new UserManagementDto
-                {
-                    Id          = user.Id,
-                    UserName    = user.UserName,
-                    FullName    = user.FullName,
-                    Email       = user.Email,
-                    PhoneNumber = user.PhoneNumber,
-                    IsActive    = user.IsActive,
-                    Roles       = await _userManager.GetRolesAsync(user)
-                });
+                var responseStream = await response.Content.ReadAsStreamAsync();
+                UserList = await JsonSerializer.DeserializeAsync<List<UserManagementDto>>(responseStream, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
             }
         }
 
         public async Task<IActionResult> OnPostToggleStatusAsync(string id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            var client  = await GetAuthenticatedClientAsync();
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
 
-            var user = await _userManager.FindByIdAsync(id);
-            if (user != null)
-            {
-                user.IsActive = !user.IsActive;
-                await _userManager.UpdateAsync(user);
-            }
+            var response = await client.PutAsync($"{baseUrl}/api/admin/users/{id}/toggle-status", null);
 
             return RedirectToPage();
         }
+
         public async Task<IActionResult> OnPostDeleteAsync(string id)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            var client  = await GetAuthenticatedClientAsync();
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
 
-            var user = await _userManager.FindByIdAsync(id);
-            if (user != null)
-            {
-                await _userManager.DeleteAsync(user);
-            }
+            var response = await client.DeleteAsync($"{baseUrl}/api/admin/users/{id}");
 
             return RedirectToPage();
         }

@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PetHotelManager.DTOs.Service;
-using System.Text;
-using System.Text.Json;
+using PetHotelManager.DTOs.RoomTypes;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
 
-namespace PetHotelManager.Pages.Services
+namespace PetHotelManager.Pages.RoomTypes
 {
     [Authorize(Roles = "Admin")]
     public class EditModel : PageModel
@@ -18,23 +19,22 @@ namespace PetHotelManager.Pages.Services
         }
 
         [BindProperty]
-        public UpdateServiceDto Input { get; set; }
+        public UpdateRoomTypeDto Input { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
             var client = _clientFactory.CreateClient("ApiClient");
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var serviceDto = await client.GetFromJsonAsync<ServiceDto>($"{baseUrl}/api/services/{id}");
+            var dto = await client.GetFromJsonAsync<RoomTypeDto>($"{baseUrl}/api/roomtypes/{id}");
 
-            if (serviceDto == null) return NotFound();
+            if (dto == null) return NotFound();
 
-            Input = new UpdateServiceDto
+            Input = new UpdateRoomTypeDto
             {
-                Id = serviceDto.Id,
-                Name = serviceDto.Name,
-                Category = serviceDto.Category,
-                Price = serviceDto.Price,
-                Unit = serviceDto.Unit
+                Id = dto.Id,
+                TypeName = dto.TypeName,
+                Description = dto.Description,
+                PricePerDay = dto.PricePerDay
             };
 
             return Page();
@@ -52,16 +52,14 @@ namespace PetHotelManager.Pages.Services
             }
 
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var content = new StringContent(JsonSerializer.Serialize(Input), Encoding.UTF8, "application/json");
-
-            var response = await client.PutAsync($"{baseUrl}/api/services/{Input.Id}", content);
+            var response = await client.PutAsJsonAsync($"{baseUrl}/api/roomtypes/{Input.Id}", Input);
 
             if (response.IsSuccessStatusCode)
             {
                 return RedirectToPage("./Index");
             }
 
-            ModelState.AddModelError(string.Empty, "Lỗi khi cập nhật dịch vụ từ API.");
+            ModelState.AddModelError(string.Empty, "Lỗi khi cập nhật loại phòng từ API.");
             return Page();
         }
     }

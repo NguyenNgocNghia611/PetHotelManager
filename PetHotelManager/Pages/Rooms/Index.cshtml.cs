@@ -1,12 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PetHotelManager.DTOs.Service;
-using System.Text.Json;
+using PetHotelManager.DTOs.Rooms;
+using System.Collections.Generic;
+using System.Net.Http;
+using System.Net.Http.Json;
+using System.Threading.Tasks;
 
-namespace PetHotelManager.Pages.Services
+namespace PetHotelManager.Pages.Rooms
 {
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin")]
     public class IndexModel : PageModel
     {
         private readonly IHttpClientFactory _clientFactory;
@@ -16,9 +19,9 @@ namespace PetHotelManager.Pages.Services
             _clientFactory = clientFactory;
         }
 
-        public IList<ServiceDto> ServiceList { get; set; } = new List<ServiceDto>();
+        public IList<RoomDto> RoomList { get; set; } = new List<RoomDto>();
 
-        private async Task<HttpClient> GetAuthenticatedClientAsync()
+        private HttpClient GetAuthenticatedClient()
         {
             var client = _clientFactory.CreateClient("ApiClient");
             var token  = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
@@ -31,17 +34,17 @@ namespace PetHotelManager.Pages.Services
 
         public async Task OnGetAsync()
         {
-            var client  = await GetAuthenticatedClientAsync();
+            var client  = GetAuthenticatedClient();
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            ServiceList = await client.GetFromJsonAsync<List<ServiceDto>>($"{baseUrl}/api/services") ?? new List<ServiceDto>();
+            RoomList = await client.GetFromJsonAsync<List<RoomDto>>($"{baseUrl}/api/rooms") ?? new List<RoomDto>();
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
-            var client  = await GetAuthenticatedClientAsync();
+            var client  = GetAuthenticatedClient();
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
 
-            await client.DeleteAsync($"{baseUrl}/api/services/{id}");
+            await client.DeleteAsync($"{baseUrl}/api/rooms/{id}");
 
             return RedirectToPage();
         }
