@@ -21,6 +21,7 @@
         public DbSet<PrescriptionDetail> PrescriptionDetails { get; set; }
         public DbSet<Invoice> Invoices { get; set; }
         public DbSet<InvoiceDetail> InvoiceDetails { get; set; }
+        public DbSet<InventoryTransaction> InventoryTransactions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
