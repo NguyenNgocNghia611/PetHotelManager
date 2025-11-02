@@ -5,45 +5,30 @@ using System.Text.Json;
 
 namespace PetHotelManager.Pages.Invoices
 {
+    using PetHotelManager.Services;
+
     [Authorize(Roles = "Admin,Staff")]
     public class DetailsModel : PageModel
     {
-        private readonly IHttpClientFactory _clientFactory;
+        private readonly IInvoiceService _invoiceService;
 
-        public DetailsModel(IHttpClientFactory clientFactory)
+        public DetailsModel(IInvoiceService invoiceService)
         {
-            _clientFactory = clientFactory;
+            _invoiceService = invoiceService;
         }
 
         public InvoiceDetailViewModel? Invoice { get; set; }
 
         public async Task<IActionResult> OnGetAsync(int id)
         {
-            var client = _clientFactory.CreateClient();
-            var request = new HttpRequestMessage(HttpMethod.Get, $"https://localhost:7234/api/invoices/{id}"); // THAY ĐÚNG PORT
+            Invoice = await _invoiceService.GetInvoiceDetailsAsync(id);
 
-            var cookie = Request.Cookies[".AspNetCore.Identity.Application"];
-            if (cookie != null)
+            if (Invoice == null)
             {
-                request.Headers.Add("Cookie", $".AspNetCore.Identity.Application={cookie}");
+                return NotFound();
             }
 
-            var response = await client.SendAsync(request);
-
-            if (response.IsSuccessStatusCode)
-            {
-                var responseStream = await response.Content.ReadAsStreamAsync();
-                Invoice = await JsonSerializer.DeserializeAsync<InvoiceDetailViewModel>(responseStream, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-
-                if (Invoice == null)
-                {
-                    return NotFound();
-                }
-
-                return Page();
-            }
-
-            return NotFound();
+            return Page();
         }
     }
 

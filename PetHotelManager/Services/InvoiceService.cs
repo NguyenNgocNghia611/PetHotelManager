@@ -42,5 +42,39 @@ namespace PetHotelManager.Services
 
             return new PaginatedList<InvoiceViewModel>(items, totalRecords, pageNumber, pageSize);
         }
+        public async Task<InvoiceDetailViewModel?> GetInvoiceDetailsAsync(int invoiceId)
+        {
+            var invoice = await _context.Invoices
+                .Include(i => i.User)
+                .Include(i => i.InvoiceDetails)
+                .ThenInclude(d => d.Product)
+                .Include(i => i.InvoiceDetails)
+                .ThenInclude(d => d.Service)
+                .Where(i => i.Id == invoiceId)
+                .Select(i => new InvoiceDetailViewModel
+                {
+                    Id          = i.Id,
+                    InvoiceDate = i.InvoiceDate,
+                    TotalAmount = i.TotalAmount,
+                    Status      = i.Status,
+                    Customer = new CustomerViewModel
+                    {
+                        Id    = i.User.Id,
+                        Name  = i.User.FullName,
+                        Phone = i.User.PhoneNumber
+                    },
+                    Details = i.InvoiceDetails.Select(d => new ItemDetailViewModel
+                    {
+                        Description = d.Description,
+                        Quantity    = d.Quantity,
+                        UnitPrice   = d.UnitPrice,
+                        SubTotal    = d.SubTotal,
+                        ItemName    = d.Service != null ? d.Service.Name : (d.Product != null ? d.Product.Name : "")
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
+
+            return invoice;
+        }
     }
 }

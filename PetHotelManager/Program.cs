@@ -59,6 +59,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+builder.Services.AddScoped<ICustomerService, CustomerService>();
 
 builder.Services.AddHttpClient();
 
