@@ -35,12 +35,7 @@ builder.Services.ConfigureApplicationCookie(options =>
     options.SlidingExpiration = true;
 });
 
-builder.Services.AddAuthentication(options =>
-    {
-        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultChallengeScheme    = JwtBearerDefaults.AuthenticationScheme;
-        options.DefaultScheme             = JwtBearerDefaults.AuthenticationScheme;
-    })
+builder.Services.AddAuthentication()
     .AddJwtBearer(options =>
     {
         options.SaveToken            = true;
@@ -122,8 +117,6 @@ app.UseAuthorization();
 
 app.MapRazorPages();
 app.MapControllers();
-
-app.UseStaticFiles();
 
 using (var scope = app.Services.CreateScope())
 {
