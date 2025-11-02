@@ -23,9 +23,10 @@ namespace PetHotelManager.Models
         public int? RoomId { get; set; }
         [ForeignKey(nameof(RoomId))]
         public Room Room { get; set; }
-
+        public string? ReceiverId { get; set; }
+        [ForeignKey(nameof(ReceiverId))]
         public DateTime AppointmentDate { get; set; }
-        public string Status { get; set; }
+        public string Status { get; set; } 
         public string Notes { get; set; }
         public DateTime? CheckInDate { get; set; }
         public DateTime? CheckOutDate { get; set; }
