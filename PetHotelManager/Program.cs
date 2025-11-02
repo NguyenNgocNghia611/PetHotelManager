@@ -26,6 +26,15 @@ builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddDefaultTokenProviders();
 
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.LoginPath = "/Account/Login";
+
+    options.AccessDeniedPath = "/Account/AccessDenied";
+
+    options.SlidingExpiration = true;
+});
+
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -46,6 +55,7 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
+builder.Services.AddRazorPages();
 builder.Services.AddAuthorization();
 builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
@@ -60,23 +70,28 @@ builder.Services.AddSwaggerGen(options =>
     // Hỗ trợ upload file (IFormFile)
     options.MapType<IFormFile>(() => new Microsoft.OpenApi.Models.OpenApiSchema
     {
-        Type = "string",
+        Type   = "string",
         Format = "binary"
     });
 });
 
-builder.Services.AddSwaggerGen(c => {
-    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme {
+builder.Services.AddSwaggerGen(c =>
+{
+    c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
         Description = "JWT Authorization header using the Bearer scheme.",
         Name        = "Authorization",
         In          = ParameterLocation.Header,
         Type        = SecuritySchemeType.ApiKey,
         Scheme      = "Bearer"
     });
-    c.AddSecurityRequirement(new OpenApiSecurityRequirement() {
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+    {
         {
-            new OpenApiSecurityScheme {
-                Reference = new OpenApiReference {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
                     Type = ReferenceType.SecurityScheme,
                     Id   = "Bearer"
                 },
@@ -98,11 +113,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseRouting();
 
 app.UseAuthentication();
 
 app.UseAuthorization();
 
+app.MapRazorPages();
 app.MapControllers();
 
 app.UseStaticFiles();
