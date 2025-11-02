@@ -1,0 +1,42 @@
+@page "/products/create"
+@model PetHotelManager.Pages.Products.CreateModel
+@{
+    ViewData["Title"] = "Thêm mới Sản phẩm";
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Name" class="form-label"></label>
+                <input asp-for="Input.Name" class="form-control" />
+                <span asp-validation-for="Input.Name" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Price" class="form-label"></label>
+                <input asp-for="Input.Price" class="form-control" type="number" step="1000" />
+                <span asp-validation-for="Input.Price" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.StockQuantity" class="form-label"></label>
+                <input asp-for="Input.StockQuantity" class="form-control" type="number" />
+                <span asp-validation-for="Input.StockQuantity" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Input.Unit" class="form-label"></label>
+                <input asp-for="Input.Unit" class="form-control" />
+                <span asp-validation-for="Input.Unit" class="text-danger"></span>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Tạo mới</button>
+            <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
+        </form>
+    </div>
+</div>

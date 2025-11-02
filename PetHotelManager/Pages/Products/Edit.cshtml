@@ -1,0 +1,39 @@
+@page "/products/edit/{id:int}"
+@model PetHotelManager.Pages.Products.EditModel
+@{
+    ViewData["Title"] = "Chỉnh sửa Sản phẩm";
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
+<div class="row">
+    <div class="col-md-6">
+        <form method="post">
+            <input type="hidden" asp-for="Input.Id" />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <!-- Nội dung form giống hệt trang Create -->
+            <div class="mb-3">
+                <label asp-for="Input.Name" class="form-label"></label>
+                <input asp-for="Input.Name" class="form-control" />
+                <span asp-validation-for="Input.Name" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.Price" class="form-label"></label>
+                <input asp-for="Input.Price" class="form-control" type="number" step="1000" />
+                <span asp-validation-for="Input.Price" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.StockQuantity" class="form-label"></label>
+                <input asp-for="Input.StockQuantity" class="form-control" type="number" />
+                <span asp-validation-for="Input.StockQuantity" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.Unit" class="form-label"></label>
+                <input asp-for="Input.Unit" class="form-control" />
+                <span asp-validation-for="Input.Unit" class="text-danger"></span>
+            </div>
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
+        </form>
+    </div>
+</div>
