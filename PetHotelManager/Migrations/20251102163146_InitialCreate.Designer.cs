@@ -12,9 +12,8 @@ using PetHotelManager.Data;
 namespace PetHotelManager.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-
-    [Migration("20251029102418_InitDatabase")]
-    partial class InitDatabase
+    [Migration("20251102163146_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -258,6 +257,9 @@ namespace PetHotelManager.Migrations
                     b.Property<int>("PetId")
                         .HasColumnType("int");
 
+                    b.Property<string>("ReceiverId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int?>("RoomId")
                         .HasColumnType("int");
 
@@ -283,6 +285,44 @@ namespace PetHotelManager.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Appointments");
+                });
+
+            modelBuilder.Entity("PetHotelManager.Models.InventoryTransaction", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ChangeQuantity")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedByUserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("ProductId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ReferenceId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TransactionType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProductId");
+
+                    b.ToTable("InventoryTransactions");
                 });
 
             modelBuilder.Entity("PetHotelManager.Models.Invoice", b =>
@@ -401,10 +441,26 @@ namespace PetHotelManager.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("Age")
+                        .HasColumnType("int");
+
                     b.Property<string>("Breed")
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("HealthStatus")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("nvarchar(255)");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -493,17 +549,38 @@ namespace PetHotelManager.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<decimal>("PricePerDay")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<string>("RoomNumber")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<int>("RoomTypeId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RoomTypeId");
+
+                    b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("PetHotelManager.Models.RoomType", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Description")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal>("PricePerDay")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<string>("TypeName")
                         .IsRequired()
@@ -511,7 +588,7 @@ namespace PetHotelManager.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Rooms");
+                    b.ToTable("RoomTypes");
                 });
 
             modelBuilder.Entity("PetHotelManager.Models.Service", b =>
@@ -625,6 +702,17 @@ namespace PetHotelManager.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("PetHotelManager.Models.InventoryTransaction", b =>
+                {
+                    b.HasOne("PetHotelManager.Models.Product", "Product")
+                        .WithMany()
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Product");
+                });
+
             modelBuilder.Entity("PetHotelManager.Models.Invoice", b =>
                 {
                     b.HasOne("PetHotelManager.Models.ApplicationUser", "User")
@@ -708,6 +796,17 @@ namespace PetHotelManager.Migrations
                     b.Navigation("Product");
                 });
 
+            modelBuilder.Entity("PetHotelManager.Models.Room", b =>
+                {
+                    b.HasOne("PetHotelManager.Models.RoomType", "RoomType")
+                        .WithMany("Rooms")
+                        .HasForeignKey("RoomTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("RoomType");
+                });
+
             modelBuilder.Entity("PetHotelManager.Models.ApplicationUser", b =>
                 {
                     b.Navigation("Appointments");
@@ -744,6 +843,11 @@ namespace PetHotelManager.Migrations
             modelBuilder.Entity("PetHotelManager.Models.Room", b =>
                 {
                     b.Navigation("Appointments");
+                });
+
+            modelBuilder.Entity("PetHotelManager.Models.RoomType", b =>
+                {
+                    b.Navigation("Rooms");
                 });
 
             modelBuilder.Entity("PetHotelManager.Models.Service", b =>
