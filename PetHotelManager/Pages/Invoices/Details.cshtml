@@ -1,0 +1,78 @@
+@page "/invoices/details/{id:int}"
+@model PetHotelManager.Pages.Invoices.DetailsModel
+@{
+    ViewData["Title"] = $"Chi tiết Hóa đơn #{Model.Invoice?.Id}";
+}
+
+@if (Model.Invoice != null)
+{
+    <div class="d-flex justify-content-between">
+        <h1>@ViewData["Title"]</h1>
+        <div>
+            <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
+            <button onclick="window.print()" class="btn btn-primary"><i class="bi bi-printer-fill"></i> In Hóa đơn</button>
+        </div>
+    </div>
+    <hr />
+
+    <div class="card">
+        <div class="card-header">
+            <div class="row">
+                <div class="col-md-6">
+                    <strong>Ngày tạo:</strong> @Model.Invoice.InvoiceDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <strong>Trạng thái:</strong>
+                    <span class="badge @(Model.Invoice.Status == "Paid" ? "bg-success" : (Model.Invoice.Status == "Cancelled" ? "bg-danger" : "bg-warning"))">
+                        @Model.Invoice.Status
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <h5 class="card-title">Thông tin Khách hàng</h5>
+            <p class="card-text">
+                <strong>Tên:</strong> @Model.Invoice.Customer.Name <br />
+                <strong>Số điện thoại:</strong> @Model.Invoice.Customer.Phone
+            </p>
+            <hr />
+            <h5 class="card-title">Chi tiết Dịch vụ/Sản phẩm</h5>
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col">Tên mục</th>
+                        <th scope="col" class="text-end">Số lượng</th>
+                        <th scope="col" class="text-end">Đơn giá</th>
+                        <th scope="col" class="text-end">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @{ int counter = 1; }
+                    @foreach (var item in Model.Invoice.Details)
+                    {
+                        <tr>
+                            <th scope="row">@(counter++)</th>
+                            <td>@item.ItemName (@item.Description)</td>
+                            <td class="text-end">@item.Quantity</td>
+                            <td class="text-end">@item.UnitPrice.ToString("N0")</td>
+                            <td class="text-end">@item.SubTotal.ToString("N0")</td>
+                        </tr>
+                    }
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="4" class="text-end fw-bold">TỔNG CỘNG</td>
+                        <td class="text-end fw-bold">@Model.Invoice.TotalAmount.ToString("N0") VNĐ</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger" role="alert">
+        Không tìm thấy hóa đơn.
+    </div>
+}
