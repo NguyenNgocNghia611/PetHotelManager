@@ -47,28 +47,28 @@
                 .HasOne(d => d.Invoice)
                 .WithMany(i => i.InvoiceDetails)
                 .HasForeignKey(d => d.InvoiceId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             // 🔹 4. Appointment - User
             modelBuilder.Entity<Appointment>()
                 .HasOne(a => a.User)
                 .WithMany(u => u.Appointments)
                 .HasForeignKey(a => a.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             // 🔹 5. Pet - User
             modelBuilder.Entity<Pet>()
                 .HasOne(p => p.User)
                 .WithMany(u => u.Pets)
                 .HasForeignKey(p => p.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             // 🔹 6. Invoice - User
             modelBuilder.Entity<Invoice>()
                 .HasOne(i => i.User)
                 .WithMany(u => u.Invoices)
                 .HasForeignKey(i => i.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+                .OnDelete(DeleteBehavior.Cascade);
 
             // 🔹 7. MedicalRecord - Veterinarian
             modelBuilder.Entity<MedicalRecord>()

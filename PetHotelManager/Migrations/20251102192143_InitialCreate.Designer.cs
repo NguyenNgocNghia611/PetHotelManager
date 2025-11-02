@@ -12,7 +12,7 @@ using PetHotelManager.Data;
 namespace PetHotelManager.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251102163146_InitialCreate")]
+    [Migration("20251102192143_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -690,7 +690,7 @@ namespace PetHotelManager.Migrations
                     b.HasOne("PetHotelManager.Models.ApplicationUser", "User")
                         .WithMany("Appointments")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Pet");
@@ -718,7 +718,7 @@ namespace PetHotelManager.Migrations
                     b.HasOne("PetHotelManager.Models.ApplicationUser", "User")
                         .WithMany("Invoices")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
@@ -729,7 +729,7 @@ namespace PetHotelManager.Migrations
                     b.HasOne("PetHotelManager.Models.Invoice", "Invoice")
                         .WithMany("InvoiceDetails")
                         .HasForeignKey("InvoiceId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("PetHotelManager.Models.Product", "Product")
@@ -771,7 +771,7 @@ namespace PetHotelManager.Migrations
                     b.HasOne("PetHotelManager.Models.ApplicationUser", "User")
                         .WithMany("Pets")
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");

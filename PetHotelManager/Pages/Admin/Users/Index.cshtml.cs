@@ -39,5 +39,37 @@ namespace PetHotelManager.Pages.Admin.Users
                 });
             }
         }
+
+        public async Task<IActionResult> OnPostToggleStatusAsync(string id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
+            {
+                user.IsActive = !user.IsActive;
+                await _userManager.UpdateAsync(user);
+            }
+
+            return RedirectToPage();
+        }
+        public async Task<IActionResult> OnPostDeleteAsync(string id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var user = await _userManager.FindByIdAsync(id);
+            if (user != null)
+            {
+                await _userManager.DeleteAsync(user);
+            }
+
+            return RedirectToPage();
+        }
     }
 }
