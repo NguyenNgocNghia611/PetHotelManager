@@ -1,0 +1,85 @@
+@page "/invoices"
+@model PetHotelManager.Pages.Invoices.IndexModel
+@{
+    ViewData["Title"] = "Quản lý Hóa đơn";
+}
+
+<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
+    <h1>@ViewData["Title"]</h1>
+    <div class="btn-toolbar mb-2 mb-md-0">
+        <a asp-page="Create" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-plus-circle-fill"></i>
+            Tạo Hóa đơn mới
+        </a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped table-sm">
+        <thead>
+            <tr>
+                <th scope="col">Mã HĐ</th>
+                <th scope="col">Ngày tạo</th>
+                <th scope="col">Khách hàng</th>
+                <th scope="col" class="text-end">Tổng tiền</th>
+                <th scope="col">Trạng thái</th>
+                <th scope="col" class="text-end">Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.Invoices != null && Model.Invoices.Any())
+            {
+                @foreach (var invoice in Model.Invoices)
+                {
+                    <tr>
+                        <td>#@invoice.Id</td>
+                        <td>@invoice.InvoiceDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@invoice.CustomerName</td>
+                        <td class="text-end">@invoice.TotalAmount.ToString("N0") VNĐ</td>
+                        <td>
+                            <span class="badge @(invoice.Status == "Paid" ? "bg-success" : (invoice.Status == "Cancelled" ? "bg-danger" : "bg-warning"))">
+                                @invoice.Status
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a asp-page="./Details" asp-route-id="@invoice.Id" class="btn btn-sm btn-outline-info">Xem chi tiết</a>
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="text-center">Chưa có hóa đơn nào.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.Invoices != null && Model.Invoices.TotalPages > 1)
+{
+    <nav>
+        <ul class="pagination">
+            @{
+                var prevDisabled = !Model.Invoices.HasPreviousPage ? "disabled" : "";
+                var nextDisabled = !Model.Invoices.HasNextPage ? "disabled" : "";
+            }
+
+            <li class="page-item @prevDisabled">
+                <a class="page-link" asp-page="./Index" asp-route-pageNumber="@(Model.Invoices.PageIndex - 1)">Trước</a>
+            </li>
+
+            @for (int i = 1; i <= Model.Invoices.TotalPages; i++)
+            {
+                <li class="page-item @(i == Model.Invoices.PageIndex ? "active" : "")">
+                    <a class="page-link" asp-page="./Index" asp-route-pageNumber="@i">@i</a>
+                </li>
+            }
+
+            <li class="page-item @nextDisabled">
+                <a class="page-link" asp-page="./Index" asp-route-pageNumber="@(Model.Invoices.PageIndex + 1)">Sau</a>
+            </li>
+        </ul>
+    </nav>
+}

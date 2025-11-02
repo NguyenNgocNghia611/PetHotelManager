@@ -56,7 +56,10 @@ builder.Services.AddAuthorization();
 builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
 builder.Services.AddControllers();
+
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<IInvoiceService, InvoiceService>();
+
 builder.Services.AddHttpClient();
 
 

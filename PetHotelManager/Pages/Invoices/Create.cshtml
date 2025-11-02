@@ -1,0 +1,203 @@
+@page "/invoices/create"
+@model PetHotelManager.Pages.Invoices.CreateModel
+@{
+    ViewData["Title"] = "Tạo Hóa đơn mới";
+}
+
+<h1>@ViewData["Title"]</h1>
+<hr />
+
+<form id="invoiceForm">
+    <div class="row">
+        <div class="col-md-6">
+            <div class="mb-3">
+                <label asp-for="Input.UserId" class="form-label"></label>
+                <select asp-for="Input.UserId" asp-items="Model.Customers" class="form-select" id="customerSelect">
+                    <option value="">-- Chọn khách hàng --</option>
+                </select>
+                <span asp-validation-for="Input.UserId" class="text-danger"></span>
+            </div>
+        </div>
+    </div>
+
+    <hr />
+
+    <h4>Chi tiết Hóa đơn</h4>
+    <div class="row align-items-end g-3 mb-3 p-3 border rounded">
+        <div class="col-md-4">
+            <label class="form-label">Loại</label>
+            <select id="itemType" class="form-select">
+                <option value="service">Dịch vụ</option>
+                <option value="product">Sản phẩm</option>
+            </select>
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Tên</label>
+            <select id="serviceSelect" class="form-select">
+                <option value="">-- Chọn dịch vụ --</option>
+                @foreach (var item in Model.Services)
+                {
+                    <option value="@item.Value" data-price="@Model.ServicePrices[int.Parse(item.Value)]">@item.Text</option>
+                }
+            </select>
+            <select id="productSelect" class="form-select" style="display: none;">
+                <option value="">-- Chọn sản phẩm --</option>
+                 @foreach (var item in Model.Products)
+                {
+                    <option value="@item.Value" data-price="@Model.ProductPrices[int.Parse(item.Value)]">@item.Text</option>
+                }
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Số lượng</label>
+            <input type="number" id="itemQuantity" class="form-control" value="1" min="1" />
+        </div>
+        <div class="col-md-2">
+            <button type="button" id="addItemBtn" class="btn btn-success w-100">Thêm</button>
+        </div>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Mô tả</th>
+                <th class="text-end">Số lượng</th>
+                <th class="text-end">Đơn giá</th>
+                <th class="text-end">Thành tiền</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody id="invoiceDetailsBody">
+        </tbody>
+        <tfoot>
+            <tr>
+                <td colspan="3" class="text-end fw-bold">Tổng cộng</td>
+                <td id="totalAmount" class="text-end fw-bold">0 VNĐ</td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+
+    <div class="mt-4">
+        <button type="submit" class="btn btn-primary">Lưu Hóa đơn</button>
+        <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
+    </div>
+</form>
+
+@section Scripts {
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script>
+        $(document).ready(function () {
+            $('#itemType').on('change', function () {
+                if ($(this).val() === 'service') {
+                    $('#serviceSelect').show();
+                    $('#productSelect').hide();
+                } else {
+                    $('#serviceSelect').hide();
+                    $('#productSelect').show();
+                }
+            }).trigger('change');
+
+            // Nút "Thêm"
+            $('#addItemBtn').on('click', function () {
+                const type = $('#itemType').val();
+                const quantity = parseInt($('#itemQuantity').val());
+                const selectElement = type === 'service' ? $('#serviceSelect') : $('#productSelect');
+
+                const itemId = selectElement.val();
+                if (!itemId || quantity <= 0) {
+                    alert('Vui lòng chọn một mục và nhập số lượng hợp lệ.');
+                    return;
+                }
+
+                const itemName = selectElement.find('option:selected').text();
+                const itemPrice = parseFloat(selectElement.find('option:selected').data('price'));
+                const subTotal = quantity * itemPrice;
+
+                const row = `
+                    <tr data-type="${type}" data-id="${itemId}" data-quantity="${quantity}" data-price="${itemPrice}">
+                        <td>${itemName}</td>
+                        <td class="text-end">${quantity}</td>
+                        <td class="text-end">${itemPrice.toLocaleString('vi-VN')}</td>
+                        <td class="text-end">${subTotal.toLocaleString('vi-VN')}</td>
+                        <td class="text-center">
+                            <button type="button" class="btn btn-sm btn-danger remove-item-btn">Xóa</button>
+                        </td>
+                    </tr>`;
+
+                $('#invoiceDetailsBody').append(row);
+                updateTotal();
+            });
+
+            $('#invoiceDetailsBody').on('click', '.remove-item-btn', function () {
+                $(this).closest('tr').remove();
+                updateTotal();
+            });
+
+            function updateTotal() {
+                let total = 0;
+                $('#invoiceDetailsBody tr').each(function () {
+                    const price = parseFloat($(this).data('price'));
+                    const quantity = parseInt($(this).data('quantity'));
+                    total += price * quantity;
+                });
+                $('#totalAmount').text(total.toLocaleString('vi-VN') + ' VNĐ');
+            }
+
+            $('#invoiceForm').on('submit', function (e) {
+                e.preventDefault();
+
+                const userId = $('#customerSelect').val();
+                if (!userId) {
+                    alert('Vui lòng chọn khách hàng.');
+                    return;
+                }
+
+                const details = [];
+                $('#invoiceDetailsBody tr').each(function () {
+                    const type = $(this).data('type');
+                    const id = parseInt($(this).data('id'));
+                    const quantity = parseInt($(this).data('quantity'));
+
+                    if (type === 'service') {
+                        details.push({ serviceId: id, productId: null, quantity: quantity });
+                    } else {
+                        details.push({ serviceId: null, productId: id, quantity: quantity });
+                    }
+                });
+
+                if (details.length === 0) {
+                    alert('Hóa đơn phải có ít nhất một chi tiết.');
+                    return;
+                }
+
+                const invoiceData = {
+                    userId: userId,
+                    details: details
+                };
+
+                fetch('/api/invoices', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(invoiceData)
+                })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    }
+                    return response.text().then(text => { throw new Error(text) });
+                })
+                .then(data => {
+                    alert('Tạo hóa đơn thành công!');
+                    window.location.href = '/invoices';
+                })
+                .catch(error => {
+                    console.error('Lỗi:', error);
+                    alert('Đã xảy ra lỗi khi tạo hóa đơn. Chi tiết: ' + error.message);
+                });
+            });
+        });
+    </script>
+}
