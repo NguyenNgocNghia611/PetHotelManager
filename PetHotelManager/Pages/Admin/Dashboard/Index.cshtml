@@ -1,0 +1,75 @@
+@page "/admin/dashboard"
+@model PetHotelManager.Pages.Admin.Dashboard.IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-primary shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                            Tổng số Khách hàng</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Stats.TotalCustomers</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-person-check-fill fs-2 text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-success shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                            Tổng số Thú cưng</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Stats.TotalPets</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-heart-fill fs-2 text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-info shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Lịch hẹn hôm nay
+                        </div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Stats.AppointmentsToday</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-calendar-day fs-2 text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-left-warning shadow h-100 py-2">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                            Doanh thu hôm nay</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">@Model.Stats.RevenueToday.ToString("N0") VNĐ</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="bi bi-cash-coin fs-2 text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

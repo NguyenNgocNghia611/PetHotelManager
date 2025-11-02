@@ -7,6 +7,7 @@ using Microsoft.OpenApi.Models;
 using PetHotelManager.Data;
 using PetHotelManager.Helpers;
 using PetHotelManager.Models;
+using PetHotelManager.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,6 +56,10 @@ builder.Services.AddAuthorization();
 builder.Services.AddAutoMapper(typeof(MappingProfiles).Assembly);
 
 builder.Services.AddControllers();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddHttpClient();
+
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 //builder.Services.AddSwaggerGen();
