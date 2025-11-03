@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using PetHotelManager.Common;
 using PetHotelManager.Data;
 using PetHotelManager.DTOs.Appointments;
+using PetHotelManager.DTOs.Rooms;
 using PetHotelManager.Models;
 
 namespace PetHotelManager.Controllers
@@ -27,13 +28,35 @@ namespace PetHotelManager.Controllers
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
+            //  Validate ngày 
+            if (dto.CheckOutDate <= dto.AppointmentDate)
+                return BadRequest(new { message = "Ngày trả phòng phải lớn hơn ngày nhận phòng." });
+
+            //  Kiểm tra phòng có trống không 
+            var hasConflict = await _context.Appointments
+                .Where(a => a.RoomId == dto.RoomId && a.Status != "Cancelled")
+                .AnyAsync(a =>
+                    // Nếu đã check-in: trùng khoảng thời gian giữa checkin – checkout
+                    (a.CheckInDate.HasValue && a.CheckOutDate.HasValue &&
+                     a.CheckInDate.Value < dto.CheckOutDate && a.CheckOutDate.Value > dto.AppointmentDate)
+                    ||
+                    // Nếu chưa check-in: trùng ngày dự kiến
+                    (!a.CheckInDate.HasValue && a.AppointmentDate < dto.CheckOutDate && a.AppointmentDate >= dto.AppointmentDate)
+                );
+
+            if (hasConflict)
+                return BadRequest(new { message = "Phòng này đã được đặt trong khoảng thời gian bạn chọn." });
+
+            //  Tạo lịch 
             var appointment = new Appointment
             {
-                UserId = dto.UserId,
+                UserId = dto.UserId.Trim(),
                 PetId = dto.PetId,
                 ServiceId = dto.ServiceId,
                 RoomId = dto.RoomId,
                 AppointmentDate = dto.AppointmentDate,
+                CheckInDate = null,
+                CheckOutDate = dto.CheckOutDate,
                 Notes = dto.Notes,
                 Status = "Pending"
             };
@@ -44,8 +67,9 @@ namespace PetHotelManager.Controllers
             return Ok(new { message = "Đặt lịch thành công!", appointment.Id });
         }
 
+
         // Người đặt HUỶ lịch
-        [Authorize(Roles = "Customer,Staff")]
+        //[Authorize(Roles = "Customer,Staff")]
         [HttpPut("{id}/cancel")]
         public async Task<IActionResult> CancelAppointment(int id)
         {
@@ -193,7 +217,7 @@ namespace PetHotelManager.Controllers
             return Ok(appointment);
         }
 
-
+        //  CHECK-IN
         [HttpGet("filter")]
         public async Task<IActionResult> FilterAppointmentsByStatus(
             [FromQuery] string status,
@@ -235,5 +259,86 @@ namespace PetHotelManager.Controllers
                 data = appointments
             });
         }
+
+        [HttpPost("checkin/{appointmentId}")]
+        public async Task<IActionResult> CheckIn(int appointmentId)
+        {
+            var appointment = await _context.Appointments
+                .Include(a => a.Room).ThenInclude(r => r.RoomType)
+                .Include(a => a.Pet)
+                .Include(a => a.User)
+                .FirstOrDefaultAsync(a => a.Id == appointmentId);
+
+            if (appointment == null)
+                return NotFound(new { message = "Không tìm thấy lịch hẹn." });
+
+            if (appointment.Room == null)
+                return BadRequest(new { message = "Lịch hẹn chưa được gán phòng." });
+
+            if (appointment.Status == "CheckedIn")
+                return BadRequest(new { message = "Lịch hẹn đã được check-in." });
+
+            appointment.Status = "CheckedIn";
+            appointment.CheckInDate = DateTime.Now;
+            appointment.Room.Status = "Occupied";
+
+            await _context.SaveChangesAsync();
+
+            var dto = new RoomStatusDto
+            {
+                RoomId = appointment.Room.Id,
+                RoomNumber = appointment.Room.RoomNumber,
+                RoomType = appointment.Room.RoomType.TypeName,
+                Status = appointment.Room.Status,
+                CurrentAppointmentId = appointment.Id,
+                PetName = appointment.Pet.Name,
+                CustomerName = appointment.User.FullName,
+                CheckInDate = appointment.CheckInDate
+            };
+
+            return Ok(new { message = "Check-in thành công.", data = dto });
+        }
+
+        //  CHECK-OUT
+        [HttpPost("checkout/{appointmentId}")]
+        public async Task<IActionResult> CheckOut(int appointmentId)
+        {
+            var appointment = await _context.Appointments
+                .Include(a => a.Room).ThenInclude(r => r.RoomType)
+                .Include(a => a.Pet)
+                .Include(a => a.User)
+                .FirstOrDefaultAsync(a => a.Id == appointmentId);
+
+            if (appointment == null)
+                return NotFound(new { message = "Không tìm thấy lịch hẹn." });
+
+            if (appointment.Room == null)
+                return BadRequest(new { message = "Lịch hẹn chưa được gán phòng." });
+
+            if (appointment.Status != "CheckedIn")
+                return BadRequest(new { message = "Chỉ có thể check-out lịch hẹn đã check-in." });
+
+            appointment.Status = "CheckedOut";
+            appointment.CheckOutDate = DateTime.Now;
+            appointment.Room.Status = "Available";
+
+            await _context.SaveChangesAsync();
+
+            var dto = new RoomStatusDto
+            {
+                RoomId = appointment.Room.Id,
+                RoomNumber = appointment.Room.RoomNumber,
+                RoomType = appointment.Room.RoomType.TypeName,
+                Status = appointment.Room.Status,
+                CurrentAppointmentId = appointment.Id,
+                PetName = appointment.Pet.Name,
+                CustomerName = appointment.User.FullName,
+                CheckInDate = appointment.CheckInDate,
+                CheckOutDate = appointment.CheckOutDate
+            };
+
+            return Ok(new { message = "Check-out thành công.", data = dto });
+        }
+
     }
 }
