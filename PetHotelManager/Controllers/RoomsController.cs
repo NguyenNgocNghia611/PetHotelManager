@@ -106,5 +106,76 @@ namespace PetHotelManager.Controllers
 
             return Ok(new { message = "Room deleted successfully" });
         }
+
+        [HttpPut("update-status/{roomId}")]
+        public async Task<IActionResult> UpdateRoomStatus(int roomId, [FromBody] string status)
+        {
+            var room = await _context.Rooms
+                .Include(r => r.RoomType)
+                .FirstOrDefaultAsync(r => r.Id == roomId);
+
+            if (room == null)
+                return NotFound(new { message = "Không tìm thấy phòng." });
+
+            room.Status = status;
+            await _context.SaveChangesAsync();
+
+            var dto = new RoomStatusDto
+            {
+                RoomId = room.Id,
+                RoomNumber = room.RoomNumber,
+                RoomType = room.RoomType.TypeName,
+                Status = room.Status
+            };
+
+            return Ok(new { message = $"Đã cập nhật trạng thái phòng thành '{status}'.", data = dto });
+        }
+
+        // tìm danh sách phòng trống thoe thowif gian
+
+        [HttpGet("available")]
+        public async Task<IActionResult> GetAvailableRooms(
+            [FromQuery] DateTime startDate,
+            [FromQuery] DateTime endDate)
+        {
+            if (startDate >= endDate)
+                return BadRequest(new { message = "Ngày bắt đầu phải nhỏ hơn ngày kết thúc." });
+
+            // Lấy tất cả phòng
+            var rooms = await _context.Rooms
+                .Include(r => r.RoomType)
+                .ToListAsync();
+
+            // Lọc phòng có lịch hẹn trùng thời gian
+            var bookedRoomIds = await _context.Appointments
+                .Where(a => a.RoomId != null &&
+                            a.Status != "Cancelled" &&
+                            a.Status != "Rejected" &&
+                            (
+                                (a.CheckInDate <= endDate && a.CheckOutDate >= startDate) ||
+                                (a.AppointmentDate >= startDate && a.AppointmentDate <= endDate)
+                            ))
+                .Select(a => a.RoomId.Value)
+                .Distinct()
+                .ToListAsync();
+
+            var availableRooms = rooms
+                .Where(r => !bookedRoomIds.Contains(r.Id) && r.Status == "Available")
+                .Select(r => new
+                {
+                    r.Id,
+                    r.RoomNumber,
+                    RoomType = r.RoomType.TypeName,
+                    r.RoomType.PricePerDay,
+                    r.Status
+                })
+                .ToList();
+
+            return Ok(new
+            {
+                total = availableRooms.Count,
+                data = availableRooms
+            });
+        }
     }
 }
