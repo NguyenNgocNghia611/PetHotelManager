@@ -9,7 +9,7 @@ namespace PetHotelManager.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin,Staff,Veterinarian")]
     public class ProductsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;

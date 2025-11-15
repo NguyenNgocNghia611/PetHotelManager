@@ -13,7 +13,7 @@ namespace PetHotelManager.Data.Seed
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
 
-            string[] roleNames = { "Admin", "Staff", "Doctor" };
+            string[] roleNames = { "Admin", "Staff", "Doctor", "Veterinarian" };
 
             foreach (var roleName in roleNames)
             {
@@ -70,6 +70,35 @@ namespace PetHotelManager.Data.Seed
                     }
                 }
             }
+
+            // --- VETERINARIAN ---
+            var vetEmails = new[]
+            {
+                "vet1@pethotel.com",
+                "vet2@pethotel.com",
+                "vet3@pethotel.com"
+            };
+
+            foreach (var email in vetEmails)
+            {
+                if (!context.Users.Any(u => u.Email == email))
+                {
+                    var vet = new ApplicationUser
+                    {
+                        UserName = email.Split('@')[0],
+                        Email = email,
+                        FullName = $"Bác sĩ thú y {email.Split('@')[0]}",
+                        EmailConfirmed = true
+                    };
+                    var result = await userManager.CreateAsync(vet, "Veterinarian@123");
+                    if (result.Succeeded)
+                    {
+                        await userManager.AddToRoleAsync(vet, "Veterinarian");
+                    }
+                }
+            }
+
+            await context.SaveChangesAsync();
 
             // --- DOCTOR ---
             var doctorEmails = new[]
