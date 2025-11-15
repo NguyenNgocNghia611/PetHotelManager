@@ -6,37 +6,158 @@
 
 <h1>@ViewData["Title"]</h1>
 <hr />
+
 <div class="row">
-    <div class="col-md-6">
+    <div class="col-md-8">
         <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
 
-            <div class="mb-3">
-                <label asp-for="Input.Name" class="form-label"></label>
-                <input asp-for="Input.Name" class="form-control" />
-                <span asp-validation-for="Input.Name" class="text-danger"></span>
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">📝 Thông tin cơ bản</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8 mb-3">
+                            <label asp-for="Input.Name" class="form-label">Tên sản phẩm (*)</label>
+                            <input asp-for="Input.Name" class="form-control" />
+                            <span asp-validation-for="Input.Name" class="text-danger"></span>
+                        </div>
+
+                        @* ⭐ THÊM: Danh mục *@
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Input.Category" class="form-label">Danh mục</label>
+                            <select asp-for="Input.Category" class="form-select">
+                                <option value="">-- Chọn danh mục --</option>
+                                <option value="Thuốc">Thuốc</option>
+                                <option value="Thức ăn">Thức ăn</option>
+                                <option value="Phụ kiện">Phụ kiện</option>
+                                <option value="Chăm sóc">Chăm sóc</option>
+                                <option value="Đồ chơi">Đồ chơi</option>
+                                <option value="Vật tư y tế">Vật tư y tế</option>
+                            </select>
+                            <span asp-validation-for="Input.Category" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Input.Price" class="form-label">Giá bán (*)</label>
+                            <div class="input-group">
+                                <input asp-for="Input.Price" class="form-control" type="number" step="1000" />
+                                <span class="input-group-text">đ</span>
+                            </div>
+                            <span asp-validation-for="Input.Price" class="text-danger"></span>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Input.StockQuantity" class="form-label">Tồn kho ban đầu</label>
+                            <input asp-for="Input.StockQuantity" class="form-control" type="number" value="0" />
+                            <span asp-validation-for="Input.StockQuantity" class="text-danger"></span>
+                            <small class="form-text text-muted">Để 0 nếu nhập sau</small>
+                        </div>
+
+                        <div class="col-md-4 mb-3">
+                            <label asp-for="Input.Unit" class="form-label">Đơn vị tính (*)</label>
+                            <input asp-for="Input.Unit" class="form-control" placeholder="VD: Viên, Túi, Chai..." />
+                            <span asp-validation-for="Input.Unit" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Input.Price" class="form-label"></label>
-                <input asp-for="Input.Price" class="form-control" type="number" step="1000" />
-                <span asp-validation-for="Input.Price" class="text-danger"></span>
+            @* ⭐ THÊM: Card Quản lý kho *@
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="mb-0">📦 Quản lý kho</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Input.MinimumStock" class="form-label">
+                                Mức tồn kho tối thiểu
+                            </label>
+                            <input asp-for="Input.MinimumStock" class="form-control" type="number" value="10" />
+                            <span asp-validation-for="Input.MinimumStock" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                🔴 Cảnh báo NGHIÊM TRỌNG khi tồn kho &lt; mức này
+                            </small>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Input.ReorderLevel" class="form-label">
+                                Mức đặt hàng lại
+                            </label>
+                            <input asp-for="Input.ReorderLevel" class="form-control" type="number" value="20" />
+                            <span asp-validation-for="Input.ReorderLevel" class="text-danger"></span>
+                            <small class="form-text text-muted">
+                                🟡 Cảnh báo NÊN ĐẶT HÀNG khi tồn kho &lt; mức này
+                            </small>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info mb-0">
+                        <strong>💡 Gợi ý:</strong> ReorderLevel thường = MinimumStock × 2
+                    </div>
+                </div>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Input.StockQuantity" class="form-label"></label>
-                <input asp-for="Input.StockQuantity" class="form-control" type="number" />
-                <span asp-validation-for="Input.StockQuantity" class="text-danger"></span>
+            @* ⭐ THÊM: Checkbox IsActive *@
+            <div class="form-check mb-3">
+                <input asp-for="Input.IsActive" class="form-check-input" type="checkbox" checked />
+                <label asp-for="Input.IsActive" class="form-check-label">
+                    Đang kinh doanh
+                </label>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="Input.Unit" class="form-label"></label>
-                <input asp-for="Input.Unit" class="form-control" />
-                <span asp-validation-for="Input.Unit" class="text-danger"></span>
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-check-circle"></i> Tạo mới
+                </button>
+                <a asp-page="./Index" class="btn btn-secondary">
+                    <i class="bi bi-arrow-left"></i> Quay lại
+                </a>
             </div>
-
-            <button type="submit" class="btn btn-primary">Tạo mới</button>
-            <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
         </form>
     </div>
+
+    @* Sidebar hướng dẫn *@
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header bg-info text-white">
+                <h6 class="mb-0">ℹ️ Hướng dẫn</h6>
+            </div>
+            <div class="card-body">
+                <h6>Quản lý tồn kho:</h6>
+                <ul class="small">
+                    <li><strong>Mức tối thiểu:</strong> Giới hạn an toàn, không để hết hàng</li>
+                    <li><strong>Mức đặt hàng:</strong> Khi xuống mức này, nên đặt hàng ngay</li>
+                </ul>
+
+                <h6 class="mt-3">Ví dụ:</h6>
+                <div class="small">
+                    <p class="mb-1"><strong>Thuốc tẩy giun:</strong></p>
+                    <ul>
+                        <li>Min: 10 viên (dự phòng khẩn cấp)</li>
+                        <li>Reorder: 20 viên (đặt khi còn 20)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        // Auto-calculate ReorderLevel = MinimumStock * 2
+        document.getElementById('Input_MinimumStock').addEventListener('change', function() {
+            var minStock = parseInt(this.value) || 0;
+            var reorderInput = document.getElementById('Input_ReorderLevel');
+            if (reorderInput.value == '' || parseInt(reorderInput.value) < minStock) {
+                reorderInput.value = minStock * 2;
+            }
+        });
+    </script>
+}

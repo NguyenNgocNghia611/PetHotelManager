@@ -24,6 +24,12 @@ namespace PetHotelManager.Pages.Products
         public async Task<IActionResult> OnGetAsync(int id)
         {
             var client = _clientFactory.CreateClient("ApiClient");
+            var token = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
+            if (token != null)
+            {
+                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+            }
+
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
             var productDto = await client.GetFromJsonAsync<ProductDto>($"{baseUrl}/api/products/{id}");
 
@@ -35,7 +41,13 @@ namespace PetHotelManager.Pages.Products
                 Name = productDto.Name,
                 Price = productDto.Price,
                 StockQuantity = productDto.StockQuantity,
-                Unit = productDto.Unit
+                Unit = productDto.Unit,
+
+                // ⭐ THÊM MỚI
+                MinimumStock = productDto.MinimumStock,
+                ReorderLevel = productDto.ReorderLevel,
+                Category = productDto.Category,
+                IsActive = productDto.IsActive
             };
 
             return Page();
@@ -57,6 +69,7 @@ namespace PetHotelManager.Pages.Products
 
             if (response.IsSuccessStatusCode)
             {
+                TempData["SuccessMessage"] = "Cập nhật sản phẩm thành công!";
                 return RedirectToPage("./Index");
             }
 

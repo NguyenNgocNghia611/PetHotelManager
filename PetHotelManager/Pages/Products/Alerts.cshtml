@@ -1,0 +1,165 @@
+﻿@page "/products/alerts"
+@model PetHotelManager.Pages.Products.AlertsModel
+@{
+    ViewData["Title"] = "Cảnh báo Tồn kho Thấp";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>🚨 @ViewData["Title"]</h1>
+    <div>
+        <a asp-page="/Inventory/Receive" class="btn btn-success">
+            <i class="bi bi-box-arrow-in-down"></i> Nhập kho ngay
+        </a>
+        <a asp-page="Index" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Quay lại
+        </a>
+    </div>
+</div>
+
+@* Cards thống kê *@
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-danger">
+            <div class="card-body text-center">
+                <h2 class="display-4">@Model.OutOfStockCount</h2>
+                <p class="mb-0">Hết hàng</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body text-center">
+                <h2 class="display-4">@Model.CriticalCount</h2>
+                <p class="mb-0">Nghiêm trọng</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-info">
+            <div class="card-body text-center">
+                <h2 class="display-4">@Model.WarningCount</h2>
+                <p class="mb-0">Cảnh báo</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.OutOfStockCount == 0 && Model.CriticalCount == 0 && Model.WarningCount == 0)
+{
+    <div class="alert alert-success text-center py-5">
+        <h3>✅ Tốt lắm!</h3>
+        <p class="mb-0">Tất cả sản phẩm đều đủ hàng. Không có cảnh báo nào.</p>
+    </div>
+}
+else
+{
+    @* Hết hàng *@
+    @if (Model.OutOfStockProducts.Any())
+    {
+        <div class="card border-danger mb-3">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">🔴 HẾT HÀNG (@Model.OutOfStockCount sản phẩm)</h5>
+            </div>
+            <div class="card-body">
+                @foreach (var item in Model.OutOfStockProducts)
+                {
+                    <div class="alert alert-danger d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="alert-heading">📦 @item.Name</h5>
+                            <p class="mb-1">
+                                <strong>Danh mục:</strong> @(item.Category ?? "Chưa phân loại")
+                            </p>
+                            <p class="mb-1">
+                                <strong>Còn:</strong> <span class="text-danger fw-bold">0 @item.Unit</span> |
+                                <strong>Tối thiểu:</strong> @item.MinimumStock @item.Unit
+                            </p>
+                            <p class="mb-0 text-danger">
+                                <i class="bi bi-exclamation-triangle-fill"></i>
+                                <strong>NGHIÊM TRỌNG:</strong> Không thể bán/kê đơn → Ảnh hưởng doanh thu
+                            </p>
+                        </div>
+                        <div>
+                            <a href="/inventory/receive" class="btn btn-danger">
+                                ⚡ Nhập kho ngay
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @* Nghiêm trọng *@
+    @if (Model.CriticalProducts.Any())
+    {
+        <div class="card border-warning mb-3">
+            <div class="card-header bg-warning">
+                <h5 class="mb-0">🟠 NGHIÊM TRỌNG (@Model.CriticalCount sản phẩm)</h5>
+            </div>
+            <div class="card-body">
+                @foreach (var item in Model.CriticalProducts)
+                {
+                    <div class="alert alert-warning d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6>📦 @item.Name</h6>
+                            <p class="mb-1">
+                                <strong>Danh mục:</strong> @(item.Category ?? "Chưa phân loại")
+                            </p>
+                            <p class="mb-1">
+                                <strong>Còn:</strong> <span class="text-warning fw-bold">@item.StockQuantity @item.Unit</span> |
+                                <strong>Tối thiểu:</strong> @item.MinimumStock @item.Unit
+                            </p>
+                            <p class="mb-0 text-muted">
+                                <i class="bi bi-calendar"></i> Dự kiến hết trong 1-2 ngày
+                            </p>
+                        </div>
+                        <div>
+                            <a href="/inventory/receive" class="btn btn-warning">
+                                📞 Đặt hàng
+                            </a>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+
+    @* Cảnh báo *@
+    @if (Model.WarningProducts.Any())
+    {
+        <div class="card border-info mb-3">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">🟡 CẢNH BÁO (@Model.WarningCount sản phẩm)</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Sản phẩm</th>
+                                <th>Danh mục</th>
+                                <th class="text-end">Tồn kho</th>
+                                <th class="text-end">Mức đặt hàng</th>
+                                <th class="text-end">Thiếu</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.WarningProducts)
+                            {
+                                <tr>
+                                    <td>@item.Name</td>
+                                    <td>@(item.Category ?? "-")</td>
+                                    <td class="text-end">@item.StockQuantity @item.Unit</td>
+                                    <td class="text-end">@item.ReorderLevel @item.Unit</td>
+                                    <td class="text-end text-warning fw-bold">
+                                        @(item.ReorderLevel - item.StockQuantity) @item.Unit
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    }
+}

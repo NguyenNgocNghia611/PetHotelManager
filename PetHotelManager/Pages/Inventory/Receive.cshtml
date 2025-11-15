@@ -4,137 +4,346 @@
     ViewData["Title"] = "Tạo Phiếu Nhập kho";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>📥 @ViewData["Title"]</h1>
+    <a asp-page="/Products/Index" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+</div>
 <hr />
 
 <form id="receiptForm">
-    <div class="row">
-        <div class="col-md-6 mb-3">
-             <label for="supplier" class="form-label">Nhà cung cấp / Ghi chú</label>
-             <input type="text" id="supplier" class="form-control" placeholder="Ví dụ: Công ty ABC, Nhập hàng đợt 1..." />
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5 class="mb-0">📝 Thông tin phiếu nhập</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="supplier" class="form-label">
+                        Nhà cung cấp (*)
+                        <span class="text-danger">*</span>
+                    </label>
+                    <input type="text"
+                           id="supplier"
+                           class="form-control"
+                           placeholder="VD: Công ty Dược phẩm ABC"
+                           required />
+                    <small class="form-text text-muted">Tên nhà cung cấp hoặc nguồn hàng</small>
+                </div>
+
+                <div class="col-md-6 mb-3">
+                    <label for="notes" class="form-label">Ghi chú</label>
+                    <input type="text"
+                           id="notes"
+                           class="form-control"
+                           placeholder="VD: Lô hàng tháng 11/2025" />
+                </div>
+            </div>
         </div>
     </div>
 
-    <hr />
+    <div class="card mb-3">
+        <div class="card-header">
+            <h5 class="mb-0">📦 Chi tiết sản phẩm nhập</h5>
+        </div>
+        <div class="card-body">
+            <div class="row align-items-end g-3 mb-3 p-3 border rounded bg-light">
+                <div class="col-md-5">
+                    <label class="form-label">Sản phẩm (*)</label>
+                    <select id="productSelect" class="form-select" asp-items="Model.Products">
+                        <option value="">-- Chọn sản phẩm --</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Số lượng nhập (*)</label>
+                    <input type="number"
+                           id="itemQuantity"
+                           class="form-control"
+                           value="1"
+                           min="1" />
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Giá nhập</label>
+                    <input type="number"
+                           id="unitPrice"
+                           class="form-control"
+                           placeholder="0"
+                           step="1000" />
+                </div>
+                <div class="col-md-2">
+                    <button type="button" id="addItemBtn" class="btn btn-success w-100">
+                        <i class="bi bi-plus-circle"></i> Thêm
+                    </button>
+                </div>
+            </div>
 
-    <h4>Chi tiết Phiếu nhập</h4>
-    <div class="row align-items-end g-3 mb-3 p-3 border rounded">
-        <div class="col-md-6">
-            <label class="form-label">Sản phẩm</label>
-            <select id="productSelect" class="form-select" asp-items="Model.Products">
-                <option value="">-- Chọn sản phẩm --</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <label class="form-label">Số lượng nhập</label>
-            <input type="number" id="itemQuantity" class="form-control" value="1" min="1" />
-        </div>
-        <div class="col-md-3">
-            <button type="button" id="addItemBtn" class="btn btn-success w-100">Thêm vào phiếu</button>
+            <div class="table-responsive">
+                <table class="table table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th style="width: 40%">Sản phẩm</th>
+                            <th class="text-end" style="width: 15%">Số lượng</th>
+                            <th class="text-end" style="width: 20%">Giá nhập</th>
+                            <th class="text-end" style="width: 20%">Thành tiền</th>
+                            <th class="text-center" style="width: 5%"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="receiptDetailsBody">
+                        <tr id="emptyRow">
+                            <td colspan="5" class="text-center text-muted py-4">
+                                Chưa có sản phẩm nào. Vui lòng thêm sản phẩm vào phiếu nhập.
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="table-secondary">
+                            <th colspan="3" class="text-end">TỔNG CỘNG:</th>
+                            <th class="text-end" id="totalAmount">0 đ</th>
+                            <th></th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
         </div>
     </div>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Sản phẩm</th>
-                <th class="text-end">Số lượng</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody id="receiptDetailsBody">
-        </tbody>
-    </table>
-
-    <div class="mt-4">
-        <button type="submit" class="btn btn-primary">Xác nhận Nhập kho</button>
-        <a asp-page="/Index" class="btn btn-secondary">Quay lại Dashboard</a>
+    <div class="d-flex justify-content-between">
+        <a asp-page="/Products/Index" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Hủy
+        </a>
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+            <i class="bi bi-check-circle"></i> Xác nhận Nhập kho
+        </button>
     </div>
 </form>
 
+<!-- Modal Loading -->
+<div class="modal fade" id="loadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center py-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <h5>Đang xử lý nhập kho...</h5>
+                <p class="mb-0 text-muted">Vui lòng chờ trong giây lát</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        $(document).ready(function () {
-            // Nút "Thêm vào phiếu"
-            $('#addItemBtn').on('click', function () {
-                const quantity = parseInt($('#itemQuantity').val());
-                const productId = $('#productSelect').val();
+        (function() {
+            'use strict';
 
-                if (!productId || quantity <= 0) {
-                    alert('Vui lòng chọn sản phẩm và nhập số lượng hợp lệ.');
+            let receiptItems = [];
+            let loadingModal;
+
+            // Initialize
+            document.addEventListener('DOMContentLoaded', function() {
+                loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+                setupEventListeners();
+            });
+
+            function setupEventListeners() {
+                // Nút "Thêm sản phẩm"
+                document.getElementById('addItemBtn').addEventListener('click', addItem);
+
+                // Cho phép nhấn Enter trong ô số lượng để thêm
+                document.getElementById('itemQuantity').addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addItem();
+                    }
+                });
+
+                // Form submit
+                document.getElementById('receiptForm').addEventListener('submit', handleSubmit);
+
+                // Delegate event cho nút xóa
+                document.getElementById('receiptDetailsBody').addEventListener('click', function(e) {
+                    if (e.target.classList.contains('remove-item-btn')) {
+                        removeItem(e.target.dataset.productId);
+                    }
+                });
+            }
+
+            function addItem() {
+                const productSelect = document.getElementById('productSelect');
+                const quantity = parseInt(document.getElementById('itemQuantity').value);
+                const unitPrice = parseFloat(document.getElementById('unitPrice').value) || 0;
+
+                // Validation
+                if (!productSelect.value) {
+                    alert('❌ Vui lòng chọn sản phẩm!');
+                    productSelect.focus();
                     return;
                 }
 
-                if ($(`#receiptDetailsBody tr[data-id='${productId}']`).length > 0) {
-                    alert('Sản phẩm này đã có trong phiếu nhập.');
+                if (!quantity || quantity <= 0) {
+                    alert('❌ Số lượng phải lớn hơn 0!');
+                    document.getElementById('itemQuantity').focus();
                     return;
                 }
 
-                const productName = $('#productSelect').find('option:selected').text();
+                const productId = parseInt(productSelect.value);
+                const productName = productSelect.options[productSelect.selectedIndex].text;
 
-                const row = `
-                    <tr data-id="${productId}" data-quantity="${quantity}">
-                        <td>${productName}</td>
-                        <td class="text-end">${quantity}</td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-danger remove-item-btn">Xóa</button>
-                        </td>
-                    </tr>`;
+                // Kiểm tra trùng
+                if (receiptItems.some(item => item.productId === productId)) {
+                    alert('⚠️ Sản phẩm này đã có trong phiếu nhập!');
+                    return;
+                }
 
-                $('#receiptDetailsBody').append(row);
-            });
+                // Thêm vào danh sách
+                receiptItems.push({
+                    productId: productId,
+                    productName: productName,
+                    quantity: quantity,
+                    unitPrice: unitPrice
+                });
 
-            $('#receiptDetailsBody').on('click', '.remove-item-btn', function () {
-                $(this).closest('tr').remove();
-            });
+                // Render lại
+                renderItems();
 
-            $('#receiptForm').on('submit', function (e) {
+                // Reset form
+                productSelect.value = '';
+                document.getElementById('itemQuantity').value = '1';
+                document.getElementById('unitPrice').value = '';
+                productSelect.focus();
+            }
+
+            function removeItem(productId) {
+                const id = parseInt(productId);
+                receiptItems = receiptItems.filter(item => item.productId !== id);
+                renderItems();
+            }
+
+            function renderItems() {
+                const tbody = document.getElementById('receiptDetailsBody');
+                const emptyRow = document.getElementById('emptyRow');
+
+                if (receiptItems.length === 0) {
+                    emptyRow.style.display = 'table-row';
+                    updateTotal();
+                    return;
+                }
+
+                emptyRow.style.display = 'none';
+
+                let html = '';
+                let total = 0;
+
+                receiptItems.forEach(item => {
+                    const subtotal = item.quantity * item.unitPrice;
+                    total += subtotal;
+
+                    html += `
+                        <tr>
+                            <td>${item.productName}</td>
+                            <td class="text-end">${item.quantity.toLocaleString('vi-VN')}</td>
+                            <td class="text-end">${item.unitPrice.toLocaleString('vi-VN')} đ</td>
+                            <td class="text-end">${subtotal.toLocaleString('vi-VN')} đ</td>
+                            <td class="text-center">
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-danger remove-item-btn"
+                                        data-product-id="${item.productId}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tbody.innerHTML = emptyRow.outerHTML + html;
+                updateTotal();
+            }
+
+            function updateTotal() {
+                const total = receiptItems.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
+                document.getElementById('totalAmount').textContent = total.toLocaleString('vi-VN') + ' đ';
+            }
+
+            async function handleSubmit(e) {
                 e.preventDefault();
 
-                const lines = [];
-                $('#receiptDetailsBody tr').each(function () {
-                    const productId = parseInt($(this).data('id'));
-                    const quantity = parseInt($(this).data('quantity'));
-                    lines.push({ productId: productId, quantity: quantity, notes: null });
-                });
-
-                if (lines.length === 0) {
-                    alert('Phiếu nhập phải có ít nhất một sản phẩm.');
+                // Validation
+                const supplier = document.getElementById('supplier').value.trim();
+                if (!supplier) {
+                    alert('❌ Vui lòng nhập tên nhà cung cấp!');
+                    document.getElementById('supplier').focus();
                     return;
                 }
 
+                if (receiptItems.length === 0) {
+                    alert('❌ Phiếu nhập phải có ít nhất một sản phẩm!');
+                    return;
+                }
+
+                // Confirm
+                const confirmMsg = `Xác nhận nhập kho:\n\n` +
+                                   `📦 Số sản phẩm: ${receiptItems.length}\n` +
+                                   `📊 Tổng số lượng: ${receiptItems.reduce((s, i) => s + i.quantity, 0)}\n` +
+                                   `🏢 Nhà cung cấp: ${supplier}\n\n` +
+                                   `Bạn có chắc chắn muốn nhập kho?`;
+
+                if (!confirm(confirmMsg)) {
+                    return;
+                }
+
+                // Prepare data
                 const receiptData = {
-                    supplier: $('#supplier').val(),
-                    lines: lines
+                    supplier: supplier,
+                    receiptDate: new Date().toISOString(),
+                    notes: document.getElementById('notes').value.trim() || null,
+                    lines: receiptItems.map(item => ({
+                        productId: item.productId,
+                        quantity: item.quantity,
+                        unitPrice: item.unitPrice > 0 ? item.unitPrice : null,
+                        notes: null
+                    }))
                 };
 
-                const cookie = document.cookie.split('; ').find(row => row.startsWith('.AspNetCore.Identity.Application='));
+                console.log('📤 Sending data:', receiptData);
 
-                fetch('/api/inventory/receive', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Cookie': cookie || ''
-                    },
-                    body: JSON.stringify(receiptData)
-                })
-                .then(response => response.json().then(data => ({ status: response.status, body: data })))
-                .then(obj => {
-                    if (obj.status === 200) {
-                        alert('Nhập kho thành công!');
-                        // Reset form
-                        $('#supplier').val('');
-                        $('#receiptDetailsBody').empty();
+                // Show loading
+                loadingModal.show();
+                document.getElementById('submitBtn').disabled = true;
+
+                try {
+                    const response = await fetch('/api/inventory/receive', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        credentials: 'include', // Gửi cookie
+                        body: JSON.stringify(receiptData)
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        console.log('✅ Success:', data);
+                        alert(`✅ ${data.message || 'Nhập kho thành công!'}\n\n` +
+                              `📦 Sản phẩm: ${data.totalProducts || receiptItems.length}\n` +
+                              `📊 Số lượng: ${data.totalQuantity || receiptItems.reduce((s, i) => s + i.quantity, 0)}`);
+
+                        // Redirect về trang Products
+                        window.location.href = '/products';
                     } else {
-                         throw new Error(obj.body.message || 'Lỗi không xác định');
+                        throw new Error(data.message || data.title || 'Lỗi không xác định');
                     }
-                })
-                .catch(error => {
-                    console.error('Lỗi:', error);
-                    alert('Đã xảy ra lỗi khi nhập kho. Chi tiết: ' + error.message);
-                });
-            });
-        });
+                } catch (error) {
+                    console.error('❌ Error:', error);
+                    alert('❌ Lỗi khi nhập kho:\n\n' + error.message);
+                } finally {
+                    loadingModal.hide();
+                    document.getElementById('submitBtn').disabled = false;
+                }
+            }
+        })();
     </script>
 }

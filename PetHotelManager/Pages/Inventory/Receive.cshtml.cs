@@ -24,11 +24,18 @@ namespace PetHotelManager.Pages.Inventory
 
         public async Task OnGetAsync()
         {
-            var client   = _clientFactory.CreateClient("ApiClient");
-            var baseUrl  = $"{Request.Scheme}://{Request.Host}";
-            var products = await client.GetFromJsonAsync<List<ProductDto>>($"{baseUrl}/api/products") ?? new List<ProductDto>();
+            var client = _clientFactory.CreateClient("ApiClient");
+            var token = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
+            if (token != null)
+            {
+                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+            }
+
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var products = await client.GetFromJsonAsync<List<ProductDto>>($"{baseUrl}/api/products")
+                           ?? new List<ProductDto>();
+
             Products = new SelectList(products, "Id", "Name");
         }
-
     }
 }
