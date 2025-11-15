@@ -21,7 +21,6 @@ namespace PetHotelManager.Controllers
         }
 
         // POST: api/MedicalRecords
-        // Cho phép Staff, Doctor, Veterinarian (tương thích seed/roles hiện tại)
         [Authorize(Roles = "Staff,Doctor,Veterinarian")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateMedicalRecordDto dto)
@@ -35,7 +34,6 @@ namespace PetHotelManager.Controllers
             var pet = await _context.Pets.FindAsync(dto.PetId);
             if (pet == null) return BadRequest(new { Message = "Pet không tồn tại." });
 
-            // Transaction để đảm bảo atomicity (medical + prescriptions + trừ kho)
             using var tx = await _context.Database.BeginTransactionAsync();
             try
             {
@@ -49,7 +47,7 @@ namespace PetHotelManager.Controllers
                 };
 
                 _context.MedicalRecords.Add(medical);
-                await _context.SaveChangesAsync(); // để có medical.Id
+                await _context.SaveChangesAsync(); // Để có medical.Id
 
                 if (dto.Prescriptions != null && dto.Prescriptions.Any())
                 {
@@ -59,19 +57,15 @@ namespace PetHotelManager.Controllers
                         if (product == null)
                             throw new InvalidOperationException($"ProductId {p.ProductId} không tồn tại.");
 
-                        // Repo hiện dùng StockQuantity (xem ProductsController). Nếu tên khác, chỉnh ở đây.
-                        var stockProp = product.GetType().GetProperty("StockQuantity");
-                        if (stockProp != null)
-                        {
-                            var stockVal = (int)stockProp.GetValue(product)!;
-                            if (stockVal < p.Quantity)
-                                throw new InvalidOperationException($"Không đủ tồn kho cho productId={p.ProductId} (còn {stockVal}).");
+                        // Kiểm tra tồn kho
+                        if (product.StockQuantity < p.Quantity)
+                            throw new InvalidOperationException($"Không đủ tồn kho cho {product.Name}. Còn: {product.StockQuantity}, Yêu cầu: {p.Quantity}");
 
-                            // trừ kho
-                            stockProp.SetValue(product, stockVal - p.Quantity);
-                            _context.Products.Update(product);
-                        }
+                        // Trừ kho
+                        product.StockQuantity -= p.Quantity;
+                        _context.Products.Update(product);
 
+                        // Tạo PrescriptionDetail
                         var pd = new PrescriptionDetail
                         {
                             MedicalRecordId = medical.Id,
@@ -80,6 +74,22 @@ namespace PetHotelManager.Controllers
                             Dosage = p.Dosage ?? string.Empty
                         };
                         _context.PrescriptionDetails.Add(pd);
+
+                        // ⭐⭐⭐ THÊM MỚI - F7.2a: GHI LOG XUẤT KHO ⭐⭐⭐
+                        var inventoryLog = new InventoryTransaction
+                        {
+                            ProductId = p.ProductId,
+                            ChangeQuantity = -p.Quantity,
+                            TransactionType = "MedicalPrescription",
+                            ReferenceType = "MedicalRecord",
+                            ReferenceId = medical.Id,
+                            TransactionDate = DateTime.UtcNow,
+                            UnitPrice = product.Price,
+                            Notes = $"Kê đơn thuốc - Hồ sơ khám #{medical.Id} - Thú cưng: {pet.Name}",
+                            CreatedByUserId = userId
+                        };
+                        _context.InventoryTransactions.Add(inventoryLog);
+                        // ⭐⭐⭐ HẾT PHẦN THÊM MỚI ⭐⭐⭐
                     }
                     await _context.SaveChangesAsync();
                 }

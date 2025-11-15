@@ -1,5 +1,4 @@
 ﻿using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetHotelManager.Data;
@@ -10,6 +9,7 @@ namespace PetHotelManager.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin,Staff")]
     public class ProductsController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
@@ -19,39 +19,52 @@ namespace PetHotelManager.Controllers
             _context = context;
         }
 
-        // ================================
-        // F4.2 - Quản lý danh mục sản phẩm
-        // QTV/NV có thể thêm, sửa, xóa các sản phẩm bán tại cửa hàng (thức ăn, phụ kiện...).
-        // Ai cũng có thể xem danh sách sản phẩm.
-        // ================================
-        [AllowAnonymous]
+        // GET: api/products
         [HttpGet]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<IEnumerable<ProductDto>>> GetProducts()
+        public async Task<IActionResult> GetProducts([FromQuery] string? search, [FromQuery] string? category)
         {
-            var products = await _context.Products
+            var query = _context.Products.AsQueryable();
+
+            // Filter by search term
+            if (!string.IsNullOrEmpty(search))
+            {
+                query = query.Where(p => p.Name.Contains(search));
+            }
+
+            // Filter by category
+            if (!string.IsNullOrEmpty(category))
+            {
+                query = query.Where(p => p.Category == category);
+            }
+
+            var products = await query
+                .Where(p => p.IsActive)
+                .OrderBy(p => p.Name)
                 .Select(p => new ProductDto
                 {
                     Id = p.Id,
                     Name = p.Name,
                     Price = p.Price,
                     StockQuantity = p.StockQuantity,
-                    Unit = p.Unit
+                    Unit = p.Unit,
+                    MinimumStock = p.MinimumStock,
+                    ReorderLevel = p.ReorderLevel,
+                    Category = p.Category,
+                    IsActive = p.IsActive
                 })
                 .ToListAsync();
 
             return Ok(products);
         }
 
-        [AllowAnonymous]
+        // GET: api/products/{id}
         [HttpGet("{id}")]
-        [ProducesResponseType(StatusCodes.Status200OK)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<ProductDto>> GetProduct(int id)
+        public async Task<IActionResult> GetProductById(int id)
         {
             var product = await _context.Products.FindAsync(id);
+
             if (product == null)
-                return NotFound();
+                return NotFound(new { Message = "Không tìm thấy sản phẩm" });
 
             var dto = new ProductDto
             {
@@ -59,16 +72,19 @@ namespace PetHotelManager.Controllers
                 Name = product.Name,
                 Price = product.Price,
                 StockQuantity = product.StockQuantity,
-                Unit = product.Unit
+                Unit = product.Unit,
+                MinimumStock = product.MinimumStock,
+                ReorderLevel = product.ReorderLevel,
+                Category = product.Category,
+                IsActive = product.IsActive
             };
 
             return Ok(dto);
         }
 
-        [Authorize(Roles = "Admin,Staff")]
+        // POST: api/products
         [HttpPost]
-        [ProducesResponseType(StatusCodes.Status201Created)]
-        public async Task<ActionResult<ProductDto>> CreateProduct(CreateProductDto dto)
+        public async Task<IActionResult> CreateProduct([FromBody] CreateProductDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
@@ -78,68 +94,75 @@ namespace PetHotelManager.Controllers
                 Name = dto.Name,
                 Price = dto.Price,
                 StockQuantity = dto.StockQuantity,
-                Unit = dto.Unit
+                Unit = dto.Unit,
+                MinimumStock = dto.MinimumStock,
+                ReorderLevel = dto.ReorderLevel,
+                Category = dto.Category,
+                IsActive = dto.IsActive
             };
 
             _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
-            var result = new ProductDto
+            var resultDto = new ProductDto
             {
                 Id = product.Id,
                 Name = product.Name,
                 Price = product.Price,
                 StockQuantity = product.StockQuantity,
-                Unit = product.Unit
+                Unit = product.Unit,
+                MinimumStock = product.MinimumStock,
+                ReorderLevel = product.ReorderLevel,
+                Category = product.Category,
+                IsActive = product.IsActive
             };
 
-            return CreatedAtAction(nameof(GetProduct), new { id = product.Id }, result);
+            return CreatedAtAction(nameof(GetProductById), new { id = product.Id }, resultDto);
         }
 
-        [Authorize(Roles = "Admin,Staff")]
+        // PUT: api/products/{id}
         [HttpPut("{id}")]
-        [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<IActionResult> UpdateProduct(int id, UpdateProductDto dto)
+        public async Task<IActionResult> UpdateProduct(int id, [FromBody] UpdateProductDto dto)
         {
+            if (id != dto.Id)
+                return BadRequest(new { Message = "ID không khớp" });
+
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            if (id != dto.Id)
-                return BadRequest();
-
             var product = await _context.Products.FindAsync(id);
             if (product == null)
-                return NotFound();
+                return NotFound(new { Message = "Không tìm thấy sản phẩm" });
 
             product.Name = dto.Name;
             product.Price = dto.Price;
             product.StockQuantity = dto.StockQuantity;
             product.Unit = dto.Unit;
+            product.MinimumStock = dto.MinimumStock;
+            product.ReorderLevel = dto.ReorderLevel;
+            product.Category = dto.Category;
+            product.IsActive = dto.IsActive;
 
+            _context.Products.Update(product);
             await _context.SaveChangesAsync();
-            return Ok(new
-            {
-                message = "Cập nhật sản phẩm thành công",
-                updatedProduct = product
-            });
+
+            return NoContent();
         }
 
-        [Authorize(Roles = "Admin")]
+        // DELETE: api/products/{id}
         [HttpDelete("{id}")]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteProduct(int id)
         {
             var product = await _context.Products.FindAsync(id);
             if (product == null)
-                return NotFound();
+                return NotFound(new { Message = "Không tìm thấy sản phẩm" });
 
-            _context.Products.Remove(product);
+            // Soft delete: Chỉ set IsActive = false
+            product.IsActive = false;
+            _context.Products.Update(product);
             await _context.SaveChangesAsync();
-            return Ok(new
-            {
-                message = "Xóa sản phẩm thành công",
-                deletedProduct = product
-            });
+
+            return NoContent();
         }
     }
 }

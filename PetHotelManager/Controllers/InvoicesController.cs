@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using PetHotelManager.Data;
 using PetHotelManager.DTOs.Invoices;
 using PetHotelManager.Models;
+using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -34,15 +35,18 @@ public class InvoicesController : ControllerBase
             return NotFound(new { Message = "Không tìm thấy khách hàng." });
         }
 
+        // ⭐ Lấy userId để ghi log
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         await using var transaction = await _context.Database.BeginTransactionAsync();
 
         try
         {
             var invoice = new Invoice
             {
-                UserId      = createDto.UserId,
+                UserId = createDto.UserId,
                 InvoiceDate = DateTime.UtcNow,
-                Status      = "Unpaid",
+                Status = "Unpaid",
                 TotalAmount = 0
             };
             _context.Invoices.Add(invoice);
@@ -50,47 +54,69 @@ public class InvoicesController : ControllerBase
 
             foreach (var detailDto in createDto.Details)
             {
-                decimal       unitPrice   = 0;
-                string        description = "";
+                decimal unitPrice = 0;
+                string description = "";
                 InvoiceDetail invoiceDetail;
 
                 if (detailDto.ServiceId.HasValue)
                 {
                     var service = await _context.Services.FindAsync(detailDto.ServiceId.Value);
-                    if (service == null) throw new Exception($"Dịch vụ với ID {detailDto.ServiceId} không tồn tại.");
+                    if (service == null)
+                        throw new Exception($"Dịch vụ với ID {detailDto.ServiceId} không tồn tại.");
 
-                    unitPrice   = service.Price;
+                    unitPrice = service.Price;
                     description = service.Name;
 
                     invoiceDetail = new InvoiceDetail
                     {
-                        InvoiceId   = invoice.Id,
-                        ServiceId   = detailDto.ServiceId,
-                        Quantity    = detailDto.Quantity,
-                        UnitPrice   = unitPrice,
+                        InvoiceId = invoice.Id,
+                        ServiceId = detailDto.ServiceId,
+                        Quantity = detailDto.Quantity,
+                        UnitPrice = unitPrice,
                         Description = description,
-                        SubTotal    = detailDto.Quantity * unitPrice
+                        SubTotal = detailDto.Quantity * unitPrice
                     };
                 }
                 else if (detailDto.ProductId.HasValue)
                 {
                     var product = await _context.Products.FindAsync(detailDto.ProductId.Value);
-                    if (product == null) throw new Exception($"Sản phẩm với ID {detailDto.ProductId} không tồn-tại.");
-                    if (product.StockQuantity < detailDto.Quantity) throw new Exception($"Không đủ tồn kho cho sản phẩm '{product.Name}'. Chỉ còn {product.StockQuantity}.");
+                    if (product == null)
+                        throw new Exception($"Sản phẩm với ID {detailDto.ProductId} không tồn tại.");
 
-                    unitPrice   = product.Price;
+                    if (product.StockQuantity < detailDto.Quantity)
+                        throw new Exception($"Không đủ tồn kho cho sản phẩm '{product.Name}'. Chỉ còn {product.StockQuantity}.");
+
+                    unitPrice = product.Price;
                     description = product.Name;
 
+                    // Trừ tồn kho
                     product.StockQuantity -= detailDto.Quantity;
+                    _context.Products.Update(product);
+
+                    // ⭐⭐⭐ THÊM MỚI - F7.2b: GHI LOG XUẤT KHO ⭐⭐⭐
+                    var inventoryLog = new InventoryTransaction
+                    {
+                        ProductId = product.Id,
+                        ChangeQuantity = -detailDto.Quantity,
+                        TransactionType = "Sale",
+                        ReferenceType = "Invoice",
+                        ReferenceId = invoice.Id,
+                        TransactionDate = DateTime.UtcNow,
+                        UnitPrice = unitPrice,
+                        Notes = $"Bán hàng - Hóa đơn #{invoice.Id} - Khách hàng: {customer.FullName}",
+                        CreatedByUserId = userId
+                    };
+                    _context.InventoryTransactions.Add(inventoryLog);
+                    // ⭐⭐⭐ HẾT PHẦN THÊM MỚI ⭐⭐⭐
 
                     invoiceDetail = new InvoiceDetail
                     {
-                        InvoiceId   = invoice.Id,
-                        ProductId   = detailDto.ProductId,
-                        Quantity    = detailDto.Quantity,
-                        UnitPrice   = unitPrice,
+                        InvoiceId = invoice.Id,
+                        ProductId = detailDto.ProductId,
+                        Quantity = detailDto.Quantity,
+                        UnitPrice = unitPrice,
                         Description = description,
-                        SubTotal    = detailDto.Quantity * unitPrice
+                        SubTotal = detailDto.Quantity * unitPrice
                     };
                 }
                 else
@@ -139,16 +165,16 @@ public class InvoicesController : ControllerBase
                 i.TotalAmount,
                 i.Status,
                 CustomerName = i.User.FullName,
-                CustomerId   = i.UserId
+                CustomerId = i.UserId
             })
             .ToListAsync();
 
         return Ok(new
         {
-            Data         = invoices,
+            Data = invoices,
             TotalRecords = totalRecords,
-            PageNumber   = pageNumber,
-            PageSize     = pageSize
+            PageNumber = pageNumber,
+            PageSize = pageSize
         });
     }
 
@@ -171,8 +197,8 @@ public class InvoicesController : ControllerBase
                 i.Status,
                 Customer = new
                 {
-                    Id    = i.User.Id,
-                    Name  = i.User.FullName,
+                    Id = i.User.Id,
+                    Name = i.User.FullName,
                     Phone = i.User.PhoneNumber
                 },
                 Details = i.InvoiceDetails.Select(d => new
