@@ -62,7 +62,9 @@
                                 <td>@record.Diagnosis</td>
                                 <td>@record.VeterinarianName</td>
                                 <td class="text-end">
-                                    <a href="#" class="btn btn-sm btn-outline-info">Xem chi tiết</a>
+                                    <a asp-page="/MedicalRecords/Details" asp-route-id="@record.Id" class="btn btn-sm btn-outline-info">
+                                        <i class="bi bi-eye"></i> Xem chi tiết
+                                    </a>
                                 </td>
                             </tr>
                         }

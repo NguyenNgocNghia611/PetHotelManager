@@ -43,7 +43,7 @@
             <label class="form-label">Số lượng</label>
             <input type="number" id="itemQuantity" class="form-control" value="1" min="1" />
         </div>
-         <div class="col-md-4">
+        <div class="col-md-4">
             <label class="form-label">Liều lượng/Cách dùng</label>
             <input type="text" id="itemDosage" class="form-control" placeholder="VD: 1 viên/ngày, sau bữa ăn" />
         </div>
@@ -75,6 +75,11 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
     <script>
         $(document).ready(function () {
+            // Set ngày giờ hiện tại
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            $('#examinationDate').val(now.toISOString().slice(0, 16));
+
             // Nút "Thêm thuốc"
             $('#addItemBtn').on('click', function () {
                 const quantity = parseInt($('#itemQuantity').val());

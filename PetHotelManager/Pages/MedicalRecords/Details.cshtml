@@ -1,0 +1,130 @@
+﻿@page "/medical-records/details/{id:int}"
+@model PetHotelManager.Pages.MedicalRecords.DetailsModel
+@{
+    ViewData["Title"] = "Chi tiết Hồ sơ Khám bệnh";
+}
+
+@if (Model.MedicalRecord != null)
+{
+    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-3">
+        <h1>@ViewData["Title"] #@Model.MedicalRecord.Id</h1>
+        <div>
+            <button onclick="window.print()" class="btn btn-outline-secondary">
+                <i class="bi bi-printer"></i> In đơn thuốc
+            </button>
+            <a asp-page="./Create" class="btn btn-outline-primary">
+                <i class="bi bi-plus-circle"></i> Tạo hồ sơ mới
+            </a>
+            <a asp-page="/Pets/Details" asp-route-id="@Model.MedicalRecord.PetId" class="btn btn-secondary">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+    <hr />
+
+    <div class="row">
+        <!-- Thông tin chung -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-clipboard-pulse"></i> Thông tin khám bệnh</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Ngày khám:</strong> @Model.MedicalRecord.ExaminationDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+                    <p><strong>Bác sĩ khám:</strong> @Model.MedicalRecord.VeterinarianName</p>
+                    <hr />
+                    <p><strong>Triệu chứng:</strong></p>
+                    <p class="text-muted">@(string.IsNullOrEmpty(Model.MedicalRecord.Symptoms) ? "(Không có)" : Model.MedicalRecord.Symptoms)</p>
+                    <hr />
+                    <p><strong>Chẩn đoán:</strong></p>
+                    <p class="text-muted">@(string.IsNullOrEmpty(Model.MedicalRecord.Diagnosis) ? "(Không có)" : Model.MedicalRecord.Diagnosis)</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Thông tin thú cưng -->
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0"><i class="bi bi-heart"></i> Thông tin Thú cưng</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Mã Pet:</strong> #@Model.MedicalRecord.PetId</p>
+                    <p>
+                        <a asp-page="/Pets/Details" asp-route-id="@Model.MedicalRecord.PetId" class="btn btn-sm btn-outline-info">
+                            <i class="bi bi-eye"></i> Xem chi tiết thú cưng
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Đơn thuốc -->
+    <div class="card">
+        <div class="card-header bg-warning">
+            <h5 class="mb-0"><i class="bi bi-capsule"></i> Đơn thuốc kê</h5>
+        </div>
+        <div class="card-body">
+            @if (Model.MedicalRecord.Prescriptions != null && Model.MedicalRecord.Prescriptions.Any())
+            {
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>STT</th>
+                                <th>Tên thuốc</th>
+                                <th>Liều lượng / Cách dùng</th>
+                                <th class="text-center">Số lượng</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                int stt = 1;
+                                foreach (var prescription in Model.MedicalRecord.Prescriptions)
+                                {
+                                    <tr>
+                                        <td>@stt</td>
+                                        <td><strong>@prescription.ProductName</strong></td>
+                                        <td>@(string.IsNullOrEmpty(prescription.Dosage) ? "(Không có hướng dẫn)" : prescription.Dosage)</td>
+                                        <td class="text-center"><span class="badge bg-primary">@prescription.Quantity</span></td>
+                                    </tr>
+                                    stt++;
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+                <div class="alert alert-info mt-3">
+                    <i class="bi bi-info-circle"></i> <strong>Tổng số loại thuốc:</strong> @Model.MedicalRecord.Prescriptions.Count
+                </div>
+            }
+            else
+            {
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i> Không có đơn thuốc nào được kê cho lần khám này.
+                </div>
+            }
+        </div>
+    </div>
+}
+else
+{
+    <div class="alert alert-danger">
+        <i class="bi bi-x-circle"></i> Không tìm thấy hồ sơ khám bệnh.
+    </div>
+}
+
+@section Scripts {
+    <style>
+        @@media print {
+            .btn, .card-header {
+                display: none;
+            }
+
+            .card {
+                border: none;
+            }
+        }
+    </style>
+}
