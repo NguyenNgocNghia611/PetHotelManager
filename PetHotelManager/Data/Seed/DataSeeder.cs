@@ -13,7 +13,7 @@ namespace PetHotelManager.Data.Seed
             var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
             var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
 
-            string[] roleNames = { "Admin", "Staff", "Doctor", "Veterinarian" };
+            string[] roleNames = { "Admin", "Staff", "Doctor", "Veterinarian", "Customer" };
 
             foreach (var roleName in roleNames)
             {
