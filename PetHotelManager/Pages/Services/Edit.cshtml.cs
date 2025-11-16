@@ -1,68 +1,133 @@
+using System.ComponentModel.DataAnnotations;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PetHotelManager.DTOs.Service;
-using System.Text;
-using System.Text.Json;
 
 namespace PetHotelManager.Pages.Services
 {
     [Authorize(Roles = "Admin")]
     public class EditModel : PageModel
     {
-        private readonly IHttpClientFactory _clientFactory;
+        private readonly IHttpClientFactory _http;
+        public EditModel(IHttpClientFactory httpClientFactory) => _http = httpClientFactory;
 
-        public EditModel(IHttpClientFactory clientFactory)
-        {
-            _clientFactory = clientFactory;
-        }
+        [BindProperty(SupportsGet = true)]
+        public int Id { get; set; }
 
         [BindProperty]
-        public UpdateServiceDto Input { get; set; }
+        public EditServiceForm Form { get; set; } = new();
 
-        public async Task<IActionResult> OnGetAsync(int id)
+        public string? Error { get; set; }
+        public string? Success { get; set; }
+
+        public async Task<IActionResult> OnGetAsync()
         {
-            var client = _clientFactory.CreateClient("ApiClient");
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var serviceDto = await client.GetFromJsonAsync<ServiceDto>($"{baseUrl}/api/services/{id}");
-
-            if (serviceDto == null) return NotFound();
-
-            Input = new UpdateServiceDto
+            try
             {
-                Id = serviceDto.Id,
-                Name = serviceDto.Name,
-                Category = serviceDto.Category,
-                Price = serviceDto.Price,
-                Unit = serviceDto.Unit
-            };
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var client  = _http.CreateClient();
 
+                // GET có thể public, nhưng forward cookie cũng không hại
+                var cookieHeader = Request.Headers.Cookie.ToString();
+                if (!string.IsNullOrEmpty(cookieHeader))
+                    client.DefaultRequestHeaders.Add("Cookie", cookieHeader);
+
+                var res = await client.GetAsync($"{baseUrl}/api/Services/{Id}");
+                if (!res.IsSuccessStatusCode)
+                {
+                    Error = $"Không tải được dịch vụ. {(int)res.StatusCode} - {await res.Content.ReadAsStringAsync()}";
+                    return Page();
+                }
+
+                var svc = await res.Content.ReadFromJsonAsync<ServiceDetail>();
+                if (svc == null)
+                {
+                    Error = "Không tìm thấy dịch vụ.";
+                    return Page();
+                }
+
+                Form = new EditServiceForm
+                {
+                    Id       = svc.Id,
+                    Name     = svc.Name,
+                    Category = svc.Category,
+                    Price    = svc.Price,
+                    Unit     = svc.Unit
+                };
+            }
+            catch (Exception ex)
+            {
+                Error = ex.Message;
+            }
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid) return Page();
+            if (!ModelState.IsValid)
+                return Page();
 
-            var client = _clientFactory.CreateClient("ApiClient");
-            var token = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
-            if (token != null)
+            try
             {
-                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var client  = _http.CreateClient();
+
+                // Forward cookie trước khi PUT
+                var cookieHeader = Request.Headers.Cookie.ToString();
+                if (!string.IsNullOrEmpty(cookieHeader))
+                    client.DefaultRequestHeaders.Add("Cookie", cookieHeader);
+
+                var dto = new
+                {
+                    Id       = Form.Id,
+                    Name     = Form.Name,
+                    Category = Form.Category,
+                    Price    = Form.Price,
+                    Unit     = Form.Unit
+                };
+
+                var res = await client.PutAsJsonAsync($"{baseUrl}/api/Services/{Form.Id}", dto);
+                if (res.IsSuccessStatusCode)
+                {
+                    return RedirectToPage("/Services/Index");
+                }
+                else
+                {
+                    Error = $"Cập nhật thất bại: {(int)res.StatusCode} - {await res.Content.ReadAsStringAsync()}";
+                }
             }
-
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var content = new StringContent(JsonSerializer.Serialize(Input), Encoding.UTF8, "application/json");
-
-            var response = await client.PutAsync($"{baseUrl}/api/services/{Input.Id}", content);
-
-            if (response.IsSuccessStatusCode)
+            catch (Exception ex)
             {
-                return RedirectToPage("./Index");
+                Error = ex.Message;
             }
-
-            ModelState.AddModelError(string.Empty, "Lỗi khi cập nhật dịch vụ từ API.");
             return Page();
+        }
+
+        public class ServiceDetail
+        {
+            public int Id { get; set; }
+            public string Name { get; set; } = "";
+            public string Category { get; set; } = "";
+            public decimal Price { get; set; }
+            public string Unit { get; set; } = "";
+        }
+
+        public class EditServiceForm
+        {
+            public int Id { get; set; }
+
+            [Required, StringLength(200)]
+            public string Name { get; set; } = "";
+
+            [Required, StringLength(100)]
+            public string Category { get; set; } = "";
+
+            [Range(0, 100000000)]
+            public decimal Price { get; set; }
+
+            [Required, StringLength(50)]
+            public string Unit { get; set; } = "";
         }
     }
 }

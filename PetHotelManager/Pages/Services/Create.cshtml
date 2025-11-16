@@ -1,42 +1,44 @@
-@page "/services/create"
+@page
 @model PetHotelManager.Pages.Services.CreateModel
 @{
-    ViewData["Title"] = "Thêm mới Dịch vụ";
+    ViewData["Title"] = "Thêm dịch vụ";
 }
 
-<h1>@ViewData["Title"]</h1>
-<hr />
-<div class="row">
+<h2 class="mb-3">Thêm dịch vụ</h2>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+<form method="post" class="row g-3">
     <div class="col-md-6">
-        <form method="post">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-
-            <div class="mb-3">
-                <label asp-for="Input.Name" class="form-label"></label>
-                <input asp-for="Input.Name" class="form-control" />
-                <span asp-validation-for="Input.Name" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="Input.Category" class="form-label"></label>
-                <input asp-for="Input.Category" class="form-control" />
-                <span asp-validation-for="Input.Category" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="Input.Price" class="form-label"></label>
-                <input asp-for="Input.Price" class="form-control" type="number" step="1000" />
-                <span asp-validation-for="Input.Price" class="text-danger"></span>
-            </div>
-
-            <div class="mb-3">
-                <label asp-for="Input.Unit" class="form-label"></label>
-                <input asp-for="Input.Unit" class="form-control" />
-                <span asp-validation-for="Input.Unit" class="text-danger"></span>
-            </div>
-
-            <button type="submit" class="btn btn-primary">Tạo mới</button>
-            <a asp-page="./Index" class="btn btn-secondary">Quay lại danh sách</a>
-        </form>
+        <label class="form-label">Tên</label>
+        <input asp-for="Form.Name" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Name"></span>
     </div>
-</div>
+    <div class="col-md-6">
+        <label class="form-label">Nhóm</label>
+        <input asp-for="Form.Category" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Category"></span>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Giá</label>
+        <input asp-for="Form.Price" type="number" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Price"></span>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Đơn vị</label>
+        <input asp-for="Form.Unit" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Unit"></span>
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary">Lưu</button>
+        <a href="/Services" class="btn btn-outline-secondary">Hủy</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
