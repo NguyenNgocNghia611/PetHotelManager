@@ -1,0 +1,73 @@
+@page
+@model PetHotelManager.Pages.Appointments.CreateModel
+@{
+    ViewData["Title"] = "Tạo lịch hẹn";
+}
+
+<h2 class="mb-3">Tạo lịch hẹn</h2>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+@if (!string.IsNullOrEmpty(Model.Success))
+{
+    <div class="alert alert-success">@Model.Success</div>
+}
+
+<form method="post" class="row g-3">
+    @if (Model.IsStaff) {
+        <div class="col-md-4">
+            <label class="form-label">UserId (khách hàng)</label>
+            <input asp-for="Form.UserId" class="form-control" placeholder="Nhập UserId khách hàng" />
+        </div>
+    }
+
+    <div class="col-md-4">
+        <label class="form-label">PetId</label>
+        <input asp-for="Form.PetId" type="number" class="form-control" placeholder="Nhập PetId" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Dịch vụ</label>
+        <select asp-for="Form.ServiceId" class="form-select">
+            <option value="">-- chọn --</option>
+            @foreach (var s in Model.Services)
+            {
+                <option value="@s.Id">@s.Name (@s.Price.ToString("n0"))</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Phòng</label>
+        <select asp-for="Form.RoomId" class="form-select">
+            <option value="">-- chọn --</option>
+            @foreach (var r in Model.Rooms)
+            {
+                <option value="@r.Id">@r.RoomNumber - @r.RoomTypeName (@r.PricePerDay.ToString("n0")/ngày)</option>
+            }
+        </select>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Ngày hẹn (nhận phòng)</label>
+        <input asp-for="Form.AppointmentDate" type="datetime-local" class="form-control" />
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Ngày trả phòng (Check-out)</label>
+        <input asp-for="Form.CheckOutDate" type="datetime-local" class="form-control" />
+    </div>
+
+    <div class="col-12">
+        <label class="form-label">Ghi chú</label>
+        <textarea asp-for="Form.Notes" class="form-control" rows="2"></textarea>
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary">Đặt lịch</button>
+        <a class="btn btn-outline-secondary" href="/Appointments">Quay lại</a>
+    </div>
+</form>

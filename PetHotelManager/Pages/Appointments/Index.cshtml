@@ -1,93 +1,150 @@
-@page "/appointments"
+@page
 @model PetHotelManager.Pages.Appointments.IndexModel
 @{
-    ViewData["Title"] = "Quản lý Lịch hẹn";
+    ViewData["Title"] = "Lịch hẹn";
 }
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
-    <h1>@ViewData["Title"]</h1>
-</div>
+<h2 class="mb-3">Lịch hẹn</h2>
 
-<form method="get" class="mb-3">
-    <div class="input-group">
-        <input type="text" class="form-control" placeholder="Tìm theo tên khách, thú cưng, dịch vụ..." asp-for="SearchTerm" />
-        <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i> Tìm kiếm</button>
-    </div>
-</form>
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
 
-<div class="table-responsive">
-    <table class="table table-striped table-sm">
-        <thead>
+@if (Model.IsAdminStaffVet)
+{
+    <form method="get" class="row g-2 mb-3">
+        <div class="col-auto">
+            <input class="form-control form-control-sm" name="search" placeholder="Tìm theo tên KH / thú cưng / dịch vụ" value="@Model.Search" />
+        </div>
+        <div class="col-auto">
+            <input type="number" class="form-control form-control-sm" name="pageNumber" min="1" value="@Model.PageNumber" />
+        </div>
+        <div class="col-auto">
+            <input type="number" class="form-control form-control-sm" name="pageSize" min="1" value="@Model.PageSize" />
+        </div>
+        <div class="col-auto">
+            <button class="btn btn-sm btn-outline-primary">Lọc</button>
+        </div>
+        <div class="col-auto">
+            <a class="btn btn-sm btn-primary" href="/Appointments/Create">Tạo lịch</a>
+        </div>
+    </form>
+
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead>
             <tr>
-                <th scope="col">Ngày hẹn</th>
-                <th scope="col">Khách hàng</th>
-                <th scope="col">Thú cưng</th>
-                <th scope="col">Dịch vụ/Phòng</th>
-                <th scope="col">Trạng thái</th>
-                <th scope="col" class="text-end">Hành động</th>
+                <th>#</th>
+                <th>Khách hàng</th>
+                <th>Thú cưng</th>
+                <th>Dịch vụ</th>
+                <th>Phòng</th>
+                <th>Thời gian</th>
+                <th>Trạng thái</th>
+                <th>Hành động</th>
             </tr>
-        </thead>
-        <tbody>
-            @if (Model.PaginatedList.Data != null && Model.PaginatedList.Data.Any())
+            </thead>
+            <tbody>
+            @if (Model.Items?.Count > 0)
             {
-                @foreach (var appt in Model.PaginatedList.Data)
+                foreach (var a in Model.Items)
                 {
                     <tr>
-                        <td>@appt.AppointmentDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
-                        <td>@appt.CustomerName</td>
-                        <td>@appt.PetName</td>
-                        <td>@(appt.ServiceName ?? appt.RoomName)</td>
-                        <td>
-                            @{
-                                var statusClass = "bg-secondary";
-                                switch (appt.Status?.ToLower())
-                                {
-                                    case "pending": statusClass = "bg-warning text-dark"; break;
-                                    case "accepted": statusClass = "bg-success"; break;
-                                    case "rejected":
-                                    case "cancelled": statusClass = "bg-danger"; break;
-                                    case "completed": statusClass = "bg-primary"; break;
-                                }
+                        <td>@a.Id</td>
+                        <td>@a.CustomerName</td>
+                        <td>@a.PetName</td>
+                        <td>@a.ServiceName</td>
+                        <td>@a.RoomName</td>
+                        <td>@a.AppointmentDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                        <td><span class="badge bg-secondary">@a.Status</span></td>
+                        <td class="d-flex gap-1">
+                            <a class="btn btn-sm btn-outline-secondary" href="/Appointments/Detail?id=@a.Id">Chi tiết</a>
+                            @if (a.Status == "Pending")
+                            {
+                                <form method="post" asp-page-handler="Accept" class="d-inline">
+                                    <input type="hidden" name="id" value="@a.Id" />
+                                    <button class="btn btn-sm btn-outline-success">Accept</button>
+                                </form>
+                                <form method="post" asp-page-handler="Reject" class="d-inline">
+                                    <input type="hidden" name="id" value="@a.Id" />
+                                    <button class="btn btn-sm btn-outline-danger">Reject</button>
+                                </form>
                             }
-                            <span class="badge @statusClass">@appt.Status</span>
-                        </td>
-                        <td class="text-end">
-                            <a asp-page="./Details" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-info">Chi tiết</a>
+                            @if (a.Status == "Accepted")
+                            {
+                                <form method="post" asp-page-handler="Checkin" class="d-inline">
+                                    <input type="hidden" name="id" value="@a.Id" />
+                                    <button class="btn btn-sm btn-outline-primary">Check-in</button>
+                                </form>
+                            }
+                            @if (a.Status == "CheckedIn")
+                            {
+                                <form method="post" asp-page-handler="Checkout" class="d-inline">
+                                    <input type="hidden" name="id" value="@a.Id" />
+                                    <button class="btn btn-sm btn-outline-dark">Check-out</button>
+                                </form>
+                            }
                         </td>
                     </tr>
                 }
             }
             else
             {
-                <tr>
-                    <td colspan="6" class="text-center">Không tìm thấy lịch hẹn nào.</td>
-                </tr>
+                <tr><td colspan="8" class="text-center text-muted">Không có dữ liệu</td></tr>
             }
-        </tbody>
-    </table>
-</div>
+            </tbody>
+        </table>
+    </div>
 
-@{
-    var pagination = Model.PaginatedList.Pagination;
-}
-@if (pagination != null && pagination.TotalPages > 1)
-{
-    <nav>
-        <ul class="pagination">
-            <li class="page-item @(pagination.HasPreviousPage ? "" : "disabled")">
-                <a class="page-link" asp-page="./Index" asp-route-CurrentPage="@(pagination.PageNumber - 1)" asp-route-SearchTerm="@Model.SearchTerm">Trước</a>
+    <nav aria-label="pagination">
+        <ul class="pagination pagination-sm">
+            <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                <a class="page-link" href="?search=@Model.Search&pageNumber=@(Model.PageNumber - 1)&pageSize=@Model.PageSize">Trước</a>
             </li>
-
-            @for (int i = 1; i <= pagination.TotalPages; i++)
-            {
-                <li class="page-item @(i == pagination.PageNumber ? "active" : "")">
-                    <a class="page-link" asp-page="./Index" asp-route-CurrentPage="@i" asp-route-SearchTerm="@Model.SearchTerm">@i</a>
-                </li>
-            }
-
-            <li class="page-item @(pagination.HasNextPage ? "" : "disabled")">
-                <a class="page-link" asp-page="./Index" asp-route-CurrentPage="@(pagination.PageNumber + 1)" asp-route-SearchTerm="@Model.SearchTerm">Sau</a>
+            <li class="page-item disabled"><span class="page-link">Trang @Model.PageNumber</span></li>
+            <li class="page-item @((Model.PageNumber * Model.PageSize >= Model.TotalRecords) ? "disabled" : "")">
+                <a class="page-link" href="?search=@Model.Search&pageNumber=@(Model.PageNumber + 1)&pageSize=@Model.PageSize">Sau</a>
             </li>
         </ul>
     </nav>
+}
+else
+{
+    <div class="mb-3">
+        <a class="btn btn-sm btn-primary" href="/Appointments/Create">Đặt lịch mới</a>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <h5>Tra cứu lịch hẹn</h5>
+            <form method="get">
+                <div class="input-group">
+                    <input name="LookupId" class="form-control" placeholder="Nhập ID lịch hẹn" value="@Model.LookupId" />
+                    <button class="btn btn-outline-secondary">Xem</button>
+                </div>
+            </form>
+
+            @if (Model.Lookup != null)
+            {
+                <hr />
+                <dl class="row">
+                    <dt class="col-sm-3">Khách hàng</dt><dd class="col-sm-9">@Model.Lookup.CustomerName (@Model.Lookup.CustomerPhone)</dd>
+                    <dt class="col-sm-3">Thú cưng</dt><dd class="col-sm-9">@Model.Lookup.PetName</dd>
+                    <dt class="col-sm-3">Dịch vụ</dt><dd class="col-sm-9">@Model.Lookup.ServiceName</dd>
+                    <dt class="col-sm-3">Phòng</dt><dd class="col-sm-9">@Model.Lookup.RoomName</dd>
+                    <dt class="col-sm-3">Thời gian</dt><dd class="col-sm-9">@Model.Lookup.AppointmentDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+                    <dt class="col-sm-3">Trạng thái</dt><dd class="col-sm-9">@Model.Lookup.Status</dd>
+                    <dt class="col-sm-3">Ghi chú</dt><dd class="col-sm-9">@Model.Lookup.Notes</dd>
+                </dl>
+                @if (Model.Lookup.Status != "Cancelled")
+                {
+                    <form method="post" asp-page-handler="Cancel">
+                        <input type="hidden" name="id" value="@Model.Lookup.Id" />
+                        <button class="btn btn-sm btn-outline-danger">Hủy lịch</button>
+                    </form>
+                }
+            }
+        </div>
+    </div>
 }

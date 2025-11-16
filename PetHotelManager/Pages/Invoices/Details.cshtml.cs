@@ -1,13 +1,13 @@
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using System.Text.Json;
+using PetHotelManager.Pages.Invoices;
+using PetHotelManager.Services;
 
 namespace PetHotelManager.Pages.Invoices
 {
-    using PetHotelManager.Services;
-
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize] // Backend đã kiểm soát quyền bằng ownership + roles
     public class DetailsModel : PageModel
     {
         private readonly IInvoiceService _invoiceService;
@@ -17,44 +17,27 @@ namespace PetHotelManager.Pages.Invoices
             _invoiceService = invoiceService;
         }
 
+        [BindProperty(SupportsGet = true)]
+        public int Id { get; set; }
+
         public InvoiceDetailViewModel? Invoice { get; set; }
+        public string?                 Error   { get; set; }
 
-        public async Task<IActionResult> OnGetAsync(int id)
+        public async Task<IActionResult> OnGetAsync()
         {
-            Invoice = await _invoiceService.GetInvoiceDetailsAsync(id);
-
-            if (Invoice == null)
+            try
             {
-                return NotFound();
+                Invoice = await _invoiceService.GetInvoiceDetailsAsync(Id);
+                if (Invoice == null)
+                {
+                    Error = "Không tìm thấy hóa đơn.";
+                }
             }
-
+            catch (System.Exception ex)
+            {
+                Error = ex.Message;
+            }
             return Page();
         }
-    }
-
-    public class InvoiceDetailViewModel
-    {
-        public int Id { get; set; }
-        public DateTime InvoiceDate { get; set; }
-        public decimal TotalAmount { get; set; }
-        public string Status { get; set; }
-        public CustomerViewModel Customer { get; set; }
-        public List<ItemDetailViewModel> Details { get; set; }
-    }
-
-    public class CustomerViewModel
-    {
-        public string Id { get; set; }
-        public string Name { get; set; }
-        public string Phone { get; set; }
-    }
-
-    public class ItemDetailViewModel
-    {
-        public string Description { get; set; }
-        public int Quantity { get; set; }
-        public decimal UnitPrice { get; set; }
-        public decimal SubTotal { get; set; }
-        public string ItemName { get; set; }
     }
 }

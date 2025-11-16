@@ -1,68 +1,162 @@
+using System.Net.Http.Json;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PetHotelManager.DTOs.Appointments;
-using System.Text.Json;
 
-namespace PetHotelManager.Pages.Appointments
+namespace PetHotelManager.Pages.Appointments;
+
+[Authorize] // yêu cầu đăng nhập
+public class IndexModel(IHttpClientFactory httpClientFactory) : PageModel
 {
-    [Authorize(Roles = "Admin,Staff,Doctor")]
-    public class IndexModel : PageModel
+    private readonly IHttpClientFactory _http = httpClientFactory;
+
+    public bool IsAdminStaffVet => User.IsInRole("Admin") || User.IsInRole("Staff") || User.IsInRole("Veterinarian") || User.IsInRole("Doctor");
+
+    [BindProperty(SupportsGet = true)]
+    public string? Search { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public int PageNumber { get; set; } = 1;
+
+    [BindProperty(SupportsGet = true)]
+    public int PageSize { get; set; } = 10;
+
+    [BindProperty(SupportsGet = true)]
+    public string? LookupId { get; set; }
+
+    public List<AppointmentRow> Items { get; set; } = [];
+    public int TotalRecords { get; set; }
+    public string? Error { get; set; }
+
+    public AppointmentDetail? Lookup { get; set; }
+
+    public async Task<IActionResult> OnGet()
     {
-        private readonly IHttpClientFactory _clientFactory;
-
-        public IndexModel(IHttpClientFactory clientFactory)
+        try
         {
-            _clientFactory = clientFactory;
-        }
-
-        public PaginatedAppointmentList PaginatedList { get; set; } = new PaginatedAppointmentList();
-
-        [BindProperty(SupportsGet = true)]
-        public string? SearchTerm { get; set; }
-
-        [BindProperty(SupportsGet = true)]
-        public int CurrentPage { get; set; } = 1;
-
-        public async Task OnGetAsync()
-        {
-            var client = _clientFactory.CreateClient("ApiClient");
-            var token = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
-            if (token != null)
-            {
-                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
-            }
-
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var requestUrl = $"{baseUrl}/api/appointments?pageNumber={CurrentPage}&pageSize=10";
-            if (!string.IsNullOrEmpty(SearchTerm))
+            var client = _http.CreateClient();
+
+            if (IsAdminStaffVet)
             {
-                requestUrl += $"&search={SearchTerm}";
+                var url = $"{baseUrl}/api/Appointments?pageNumber={PageNumber}&pageSize={PageSize}";
+                if (!string.IsNullOrWhiteSpace(Search))
+                    url += $"&search={Uri.EscapeDataString(Search)}";
+
+                var res = await client.GetFromJsonAsync<AppointmentsListResponse>(url);
+                if (res != null)
+                {
+                    Items = res.data ?? [];
+                    TotalRecords = res.pagination?.TotalRecords ?? 0;
+                }
             }
 
-            var response = await client.GetAsync(requestUrl);
-
-            if (response.IsSuccessStatusCode)
+            if (!string.IsNullOrWhiteSpace(LookupId))
             {
-                var responseStream = await response.Content.ReadAsStreamAsync();
-                PaginatedList = await JsonSerializer.DeserializeAsync<PaginatedAppointmentList>(responseStream, new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                if (int.TryParse(LookupId, out var id))
+                {
+                    var detailUrl = $"{baseUrl}/api/Appointments/{id}";
+                    Lookup = await client.GetFromJsonAsync<AppointmentDetail>(detailUrl);
+                }
             }
         }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+        return Page();
     }
 
-    public class PaginatedAppointmentList
+    public async Task<IActionResult> OnPostAccept(int id)
     {
-        public List<AppointmentListDto> Data { get; set; } = new List<AppointmentListDto>();
-        public PaginationInfo Pagination { get; set; } = new PaginationInfo();
+        if (!IsAdminStaffVet) return Forbid();
+        return await PostNoBody($"/api/Appointments/{id}/accept");
     }
 
-    public class PaginationInfo
+    public async Task<IActionResult> OnPostReject(int id)
+    {
+        if (!IsAdminStaffVet) return Forbid();
+        return await PostNoBody($"/api/Appointments/{id}/reject", method: HttpMethod.Put);
+    }
+
+    public async Task<IActionResult> OnPostCheckin(int id)
+    {
+        if (!IsAdminStaffVet) return Forbid();
+        return await PostNoBody($"/api/Appointments/checkin/{id}");
+    }
+
+    public async Task<IActionResult> OnPostCheckout(int id)
+    {
+        if (!IsAdminStaffVet) return Forbid();
+        return await PostNoBody($"/api/Appointments/checkout/{id}");
+    }
+
+    public async Task<IActionResult> OnPostCancel(int id)
+    {
+        // Customer/Staff đều có thể cancel; server enforce ownership
+        return await PostNoBody($"/api/Appointments/{id}/cancel", method: HttpMethod.Put);
+    }
+
+    private async Task<IActionResult> PostNoBody(string relative, HttpMethod? method = null)
+    {
+        try
+        {
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var url = $"{baseUrl}{relative}";
+            var client = _http.CreateClient();
+            var req = new HttpRequestMessage(method ?? HttpMethod.Post, url)
+            {
+                Content = new StringContent("", System.Text.Encoding.UTF8, "application/json")
+            };
+            var res = await client.SendAsync(req);
+            if (!res.IsSuccessStatusCode)
+            {
+                Error = $"Lỗi: {(int)res.StatusCode} - {await res.Content.ReadAsStringAsync()}";
+            }
+        }
+        catch (Exception ex)
+        {
+            Error = ex.Message;
+        }
+        return RedirectToPage(new { Search, PageNumber, PageSize, LookupId });
+    }
+
+    public sealed class AppointmentRow
+    {
+        public int Id { get; set; }
+        public string CustomerName { get; set; } = "";
+        public string PetName { get; set; } = "";
+        public string ServiceName { get; set; } = "";
+        public string? RoomName { get; set; }
+        public DateTime AppointmentDate { get; set; }
+        public string Status { get; set; } = "";
+    }
+
+    public sealed class Pagination
     {
         public int PageNumber { get; set; }
         public int PageSize { get; set; }
         public int TotalRecords { get; set; }
         public int TotalPages { get; set; }
-        public bool HasPreviousPage => PageNumber > 1;
-        public bool HasNextPage => PageNumber < TotalPages;
+    }
+
+    public sealed class AppointmentsListResponse
+    {
+        public List<AppointmentRow>? data { get; set; }
+        public Pagination? pagination { get; set; }
+    }
+
+    public sealed class AppointmentDetail
+    {
+        public int Id { get; set; }
+        public string CustomerName { get; set; } = "";
+        public string? CustomerPhone { get; set; }
+        public string PetName { get; set; } = "";
+        public string ServiceName { get; set; } = "";
+        public string? RoomName { get; set; }
+        public DateTime AppointmentDate { get; set; }
+        public string Status { get; set; } = "";
+        public string? Notes { get; set; }
     }
 }
