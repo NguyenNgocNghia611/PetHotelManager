@@ -1,173 +1,129 @@
+@using Microsoft.AspNetCore.Identity
+@using System.Security.Claims
+@{
+    var  isAuthenticated = User?.Identity?.IsAuthenticated ?? false;
+    bool isAdmin         = User.IsInRole("Admin");
+    bool isStaff         = User.IsInRole("Staff");
+    bool isVet           = User.IsInRole("Veterinarian") || User.IsInRole("Doctor");
+    bool isCustomer      = User.IsInRole("Customer");
+    var  userName        = isAuthenticated ? User.Identity!.Name : "Guest";
+}
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>@ViewData["Title"] - Pet Hotel Manager</title>
 
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
-    <!-- Custom CSS -->
-    <style>
-        body {
-            font-size: .875rem;
-        }
-
-        .sidebar {
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 100;
-            padding: 48px 0 0;
-            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-        }
-
-        .sidebar-sticky {
-            position: relative;
-            top: 0;
-            height: calc(100vh - 48px);
-            padding-top: .5rem;
-            overflow-x: hidden;
-            overflow-y: auto;
-        }
-
-        .main-content {
-            margin-left: 220px;
-        }
-
-        .navbar-brand {
-            padding-top: .75rem;
-            padding-bottom: .75rem;
-            font-size: 1rem;
-            background-color: rgba(0, 0, 0, .25);
-            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
-        }
-
-        .nav-link {
-            font-weight: 500;
-        }
-    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
 </head>
-<body>
-    <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="#">Pet Hotel Manager</a>
-        <div class="navbar-nav">
-            <div class="nav-item text-nowrap">
-                @if (User.Identity?.IsAuthenticated ?? false)
-                {
-                    <span class="px-3 text-white">Chào, @User.Identity.Name!</span>
-                    <form method="post" asp-page="/Account/Logout" class="d-inline">
-                        <button type="submit" class="btn btn-link px-3 text-white">Đăng xuất</button>
-                    </form>
-                }
+<body class="bg-light">
+<header>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-semibold" href="/">PetHotelManager</a>
+
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#topNav" aria-controls="topNav"
+                    aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+
+            <div class="collapse navbar-collapse" id="topNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="/">Trang chủ</a></li>
+
+                    @* Admin *@
+                    @if (isAdmin)
+                    {
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Quản trị</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/Services">Dịch vụ</a></li>
+                                <li><a class="dropdown-item" href="/Products">Sản phẩm</a></li>
+                                <li><a class="dropdown-item" href="/Rooms">Phòng</a></li>
+                                <li><a class="dropdown-item" href="/RoomTypes">Loại phòng</a></li>
+                                <li><a class="dropdown-item" href="/Invoices">Hóa đơn</a></li>
+                                <li><a class="dropdown-item" href="/Customers">Khách hàng</a></li>
+                                <li>
+                                    <hr class="dropdown-divider"/>
+                                </li>
+                                <li><a class="dropdown-item" href="/Inventory">Kho (giao dịch tồn)</a></li>
+                            </ul>
+                        </li>
+                    }
+
+                    @* Staff *@
+                    @if (isStaff)
+                    {
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Nghiệp vụ (Staff)</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/Appointments">Lịch hẹn</a></li>
+                                <li><a class="dropdown-item" href="/Rooms">Tình trạng phòng</a></li>
+                                <li><a class="dropdown-item" href="/Invoices">Hóa đơn</a></li>
+                                <li><a class="dropdown-item" href="/Inventory">Kho (giao dịch tồn)</a></li>
+                            </ul>
+                        </li>
+                    }
+
+                    @* Veterinarian/Doctor *@
+                    @if (isVet)
+                    {
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Bác sĩ thú y</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/Appointments">Lịch hẹn</a></li>
+                                <li><a class="dropdown-item" href="/MedicalRecords">Hồ sơ khám</a></li>
+                            </ul>
+                        </li>
+                    }
+
+                    @* Customer *@
+                    @if (isCustomer)
+                    {
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Khách hàng</a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/Pets">Thú cưng của tôi</a></li>
+                                <li><a class="dropdown-item" href="/Appointments">Lịch hẹn của tôi</a></li>
+                                <li><a class="dropdown-item" href="/Invoices">Hóa đơn của tôi</a></li>
+                            </ul>
+                        </li>
+                    }
+
+                    <li class="nav-item"><a class="nav-link" href="/swagger">API Docs</a></li>
+                </ul>
+
+                <div class="d-flex align-items-center text-white">
+                    <span class="me-3">Xin chào, @userName</span>
+                    @if (isAuthenticated)
+                    {
+                        <a class="btn btn-outline-light btn-sm" href="/Account/Logout">Đăng xuất</a>
+                    }
+                    else
+                    {
+                        <a class="btn btn-light btn-sm" href="/Account/Login">Đăng nhập</a>
+                    }
+                </div>
             </div>
-
         </div>
-    </header>
+    </nav>
+</header>
 
-    <div class="container-fluid">
-        <div class="row">
-            <nav id="sidebarMenu" class="col-md-3 col-lg-2 d-md-block bg-light sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link active" asp-page="/Admin/Dashboard/Index">
-                                <i class="bi bi-house-door-fill"></i>
-                                Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Admin/Users/Index">
-                                <i class="bi bi-people-fill"></i>
-                                Quản lý Người dùng
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Invoices/Index">
-                                <i class="bi bi-receipt"></i>
-                                Quản lý Hóa đơn
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Customers/Index">
-                                <i class="bi bi-receipt"></i>
-                                Quản lý Khách hàng
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Services/Index">
-                                <i class="bi bi-receipt"></i>
-                                Quản lý dịch vụ
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Products/Index">
-                                <i class="bi bi-receipt"></i>
-                                Quản lý sản phẩm
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Pets/Index">
-                                <i class="bi bi-receipt"></i>
-                                Quản lý thú cưng
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Appointments/Index">
-                                <i class="bi bi-receipt"></i>
-                                Quản lý lịch hẹn
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/RoomTypes/Index">
-                                <i class="bi bi-receipt"></i>
-                                Quản lý loại phòng
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Rooms/Index">
-                                <i class="bi bi-receipt"></i>
-                                Quản lý phòng
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/Inventory/Receive">
-                                <i class="bi bi-receipt"></i>
-                                Quản lý kho hàng
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/MedicalRecords/Index">
-                                <i class="bi bi-file-medical"></i>
-                                Danh sách hồ sơ khám
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-page="/MedicalRecords/Create">
-                                <i class="bi bi-plus-circle"></i>
-                                Tạo hồ sơ khám mới
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+<main role="main" class="container my-4">
+    @RenderBody()
+</main>
 
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 main-content">
-                <div class="pt-3 pb-2 mb-3 border-bottom">
-                    @*
-                    <h1 class="h2">@ViewData["Title"]</h1>
-                *@
-                </div>
-                @RenderBody()
-            </main>
-        </div>
+<footer class="border-top py-3 bg-white">
+    <div class="container text-muted small">
+        © @(DateTime.Now.Year) PetHotelManager
     </div>
+</footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    @await RenderSectionAsync("Scripts", required: false)
+@RenderSection("Scripts", required: false)
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
