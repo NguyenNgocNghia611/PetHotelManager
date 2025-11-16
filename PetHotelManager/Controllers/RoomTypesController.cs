@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetHotelManager.Data;
 using PetHotelManager.DTOs.RoomTypes;
@@ -17,7 +18,7 @@ namespace PetHotelManager.Controllers
             _context = context;
         }
 
-        // Get all
+        // Get all (public)
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -34,7 +35,7 @@ namespace PetHotelManager.Controllers
             return Ok(list);
         }
 
-        // Get detail
+        // Get detail (public)
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
@@ -51,7 +52,8 @@ namespace PetHotelManager.Controllers
             });
         }
 
-        // Create
+        // Create (Admin)
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateRoomTypeDto dto)
         {
@@ -68,7 +70,8 @@ namespace PetHotelManager.Controllers
             return Ok(new { message = "Room type created successfully", entity.Id });
         }
 
-        // Update
+        // Update (Admin)
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateRoomTypeDto dto)
         {
@@ -87,7 +90,8 @@ namespace PetHotelManager.Controllers
             return Ok(new { message = "Room type updated successfully" });
         }
 
-        // Delete
+        // Delete (Admin)
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

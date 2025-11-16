@@ -10,7 +10,6 @@ using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin,Staff")]
 public class InvoicesController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -21,6 +20,7 @@ public class InvoicesController : ControllerBase
     }
 
     // POST: api/invoices
+    [Authorize(Roles = "Admin,Staff")]
     [HttpPost]
     public async Task<IActionResult> CreateInvoice([FromBody] InvoiceCreateDto createDto)
     {
@@ -141,6 +141,8 @@ public class InvoicesController : ControllerBase
     }
 
     // GET: api/invoices
+    // Admin/Staff xem tất cả; Customer chỉ xem của chính mình
+    [Authorize(Roles = "Admin,Staff,Customer")]
     [HttpGet]
     public async Task<IActionResult> GetInvoices([FromQuery] string? userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
@@ -149,7 +151,15 @@ public class InvoicesController : ControllerBase
             .OrderByDescending(i => i.InvoiceDate)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(userId))
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isCustomer = User.IsInRole("Customer");
+
+        if (isCustomer)
+        {
+            // Customer chỉ thấy hóa đơn của mình, bỏ qua query userId nếu có
+            query = query.Where(i => i.UserId == currentUserId);
+        }
+        else if (!string.IsNullOrEmpty(userId))
         {
             query = query.Where(i => i.UserId == userId);
         }
@@ -179,9 +189,28 @@ public class InvoicesController : ControllerBase
     }
 
     // GET: api/invoices/{id}
+    // Admin/Staff xem được; Customer chỉ xem hóa đơn của chính mình
+    [Authorize(Roles = "Admin,Staff,Customer")]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetInvoiceById(int id)
     {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var isCustomer = User.IsInRole("Customer");
+
+        if (isCustomer)
+        {
+            var ownerId = await _context.Invoices
+                .Where(i => i.Id == id)
+                .Select(i => i.UserId)
+                .FirstOrDefaultAsync();
+
+            if (ownerId == null)
+                return NotFound(new { Message = "Không tìm thấy hóa đơn." });
+
+            if (ownerId != currentUserId)
+                return Forbid();
+        }
+
         var invoice = await _context.Invoices
             .Include(i => i.User)
             .Include(i => i.InvoiceDetails)
@@ -221,6 +250,7 @@ public class InvoicesController : ControllerBase
     }
 
     // PUT: api/invoices/{id}/status
+    [Authorize(Roles = "Admin,Staff")]
     [HttpPut("{id}/status")]
     public async Task<IActionResult> UpdateInvoiceStatus(int id, [FromBody] InvoiceStatusUpdateDto statusDto)
     {
