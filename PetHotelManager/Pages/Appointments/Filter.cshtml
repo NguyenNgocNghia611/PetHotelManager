@@ -1,0 +1,74 @@
+@page
+@model PetHotelManager.Pages.Appointments.FilterModel
+@{
+    ViewData["Title"] = "Lọc lịch hẹn";
+}
+
+<h2 class="mb-3">Lọc lịch hẹn theo trạng thái</h2>
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="Status" class="form-select form-select-sm">
+            @foreach (var s in new[] { "Pending","Accepted","Rejected","Cancelled","CheckedIn","CheckedOut" })
+            {
+                <option value="@s" selected="@(Model.Status == s ? "selected" : null)">@s</option>
+            }
+        </select>
+    </div>
+    <div class="col-auto">
+        <input class="form-control form-control-sm" type="number" min="1" name="PageNumber" value="@Model.PageNumber" />
+    </div>
+    <div class="col-auto">
+        <input class="form-control form-control-sm" type="number" min="1" name="PageSize" value="@Model.PageSize" />
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-sm btn-outline-primary">Áp dụng</button>
+    </div>
+    <div class="col-auto">
+        <a class="btn btn-sm btn-outline-secondary" href="/Appointments">Về danh sách đầy đủ</a>
+    </div>
+</form>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Khách hàng</th>
+                    <th>Thú cưng</th>
+                    <th>Dịch vụ</th>
+                    <th>Phòng</th>
+                    <th>Thời gian</th>
+                    <th>Trạng thái</th>
+                </tr>
+            </thead>
+            <tbody>
+            @if (Model.Items is { Count: > 0 })
+            {
+                foreach (var a in Model.Items)
+                {
+                    <tr>
+                        <td>@a.Id</td>
+                        <td>@a.CustomerName</td>
+                        <td>@a.PetName</td>
+                        <td>@a.ServiceName</td>
+                        <td>@a.RoomName</td>
+                        <td>@a.AppointmentDate.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                        <td><span class="badge bg-secondary">@a.Status</span></td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr><td colspan="7" class="text-center text-muted">Không có dữ liệu</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}

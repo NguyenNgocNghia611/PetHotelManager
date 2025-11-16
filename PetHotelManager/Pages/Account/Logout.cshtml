@@ -1,9 +1,12 @@
 @page
 @model PetHotelManager.Pages.Account.LogoutModel
 @{
-    ViewData["Title"] = "Logout";
+    ViewData["Title"] = "Đăng xuất";
 }
 
-<form method="post" asp-page="/Account/Logout" class="d-inline">
-    <button type="submit" class="btn btn-link px-3 text-white">Đăng xuất</button>
+<h2>Bạn có chắc muốn đăng xuất?</h2>
+
+<form method="post">
+    <button class="btn btn-danger">Đăng xuất</button>
+    <a class="btn btn-secondary" href="/">Hủy</a>
 </form>

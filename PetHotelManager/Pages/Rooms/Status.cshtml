@@ -1,0 +1,64 @@
+@page
+@model PetHotelManager.Pages.Rooms.StatusModel
+@{
+    ViewData["Title"] = "Tình trạng phòng";
+}
+
+<h2 class="mb-3">Tình trạng phòng</h2>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+else if (Model.Rooms is { Count: > 0 })
+{
+    <div class="mb-2">
+        <a class="btn btn-sm btn-outline-primary" href="/Rooms/Status">Refresh</a>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-sm table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Phòng</th>
+                    <th>Loại</th>
+                    <th>Giá/ngày</th>
+                    <th>Trạng thái</th>
+                    <th>Lịch hẹn hiện tại</th>
+                    <th>Thú cưng</th>
+                    <th>Khách hàng</th>
+                    <th>Check-In</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var r in Model.Rooms)
+            {
+                <tr class="@((r.Status == "Occupied") ? "table-warning" : (r.Status == "Available" ? "table-light" : ""))">
+                    <td>@r.RoomNumber</td>
+                    <td>@r.RoomTypeName</td>
+                    <td>@r.PricePerDay.ToString("n0")</td>
+                    <td><span class="badge bg-secondary">@r.Status</span></td>
+                    <td>
+                        @if (r.CurrentAppointmentId.HasValue)
+                        {
+                            <a href="/Appointments?LookupId=@r.CurrentAppointmentId" class="text-decoration-none">
+                                #@r.CurrentAppointmentId
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">—</span>
+                        }
+                    </td>
+                    <td>@(r.PetName ?? "—")</td>
+                    <td>@(r.CustomerName ?? "—")</td>
+                    <td>@(r.CheckInDate?.ToLocalTime().ToString("dd/MM HH:mm") ?? "—")</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+}
+else
+{
+    <div class="alert alert-info">Không có dữ liệu phòng.</div>
+}

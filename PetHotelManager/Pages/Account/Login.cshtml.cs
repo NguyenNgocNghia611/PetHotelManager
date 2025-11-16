@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -6,67 +7,73 @@ using PetHotelManager.Models;
 
 namespace PetHotelManager.Pages.Account
 {
+    [AllowAnonymous]
     public class LoginModel : PageModel
     {
         private readonly SignInManager<ApplicationUser> _signInManager;
-        private readonly ILogger<LoginModel> _logger;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public LoginModel(SignInManager<ApplicationUser> signInManager, ILogger<LoginModel> logger)
+        public LoginModel(SignInManager<ApplicationUser> signInManager,
+                          UserManager<ApplicationUser> userManager)
         {
             _signInManager = signInManager;
-            _logger = logger;
+            _userManager   = userManager;
         }
 
         [BindProperty]
-        public InputModel Input { get; set; }
+        public InputModel Input { get; set; } = new();
 
-        public string ReturnUrl { get; set; }
+        [BindProperty(SupportsGet = true)]
+        public string? ReturnUrl { get; set; }
 
-        [TempData]
-        public string ErrorMessage { get; set; }
+        public string? Error { get; set; }
 
         public class InputModel
         {
-            [Required(ErrorMessage = "Tên đăng nhập là bắt buộc.")]
-            public string Username { get; set; }
+            [Required]
+            public string UserNameOrEmail { get; set; } = string.Empty;
 
-            [Required(ErrorMessage = "Mật khẩu là bắt buộc.")]
+            [Required]
             [DataType(DataType.Password)]
-            public string Password { get; set; }
+            public string Password { get; set; } = string.Empty;
 
-            [Display(Name = "Ghi nhớ đăng nhập?")]
             public bool RememberMe { get; set; }
         }
 
-        public void OnGet(string returnUrl = null)
+        public void OnGet()
         {
-            if (!string.IsNullOrEmpty(ErrorMessage))
-            {
-                ModelState.AddModelError(string.Empty, ErrorMessage);
-            }
-            ReturnUrl = returnUrl ?? Url.Content("~/");
+            // Chỉ hiển thị form
         }
 
-        public async Task<IActionResult> OnPostAsync(string returnUrl = null)
+        public async Task<IActionResult> OnPostAsync()
         {
-            ReturnUrl = returnUrl ?? Url.Content("~/");
-
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid)
             {
-                var result = await _signInManager.PasswordSignInAsync(Input.Username, Input.Password, Input.RememberMe, lockoutOnFailure: false);
-
-                if (result.Succeeded)
-                {
-                    _logger.LogInformation("User logged in.");
-                    return LocalRedirect(ReturnUrl);
-                }
-                else
-                {
-                    ModelState.AddModelError(string.Empty, "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.");
-                    return Page();
-                }
+                return Page();
             }
 
+            // Cho phép user đăng nhập bằng email hoặc username
+            var user = await _userManager.FindByEmailAsync(Input.UserNameOrEmail)
+                       ?? await _userManager.FindByNameAsync(Input.UserNameOrEmail);
+
+            if (user == null)
+            {
+                Error = "Tài khoản không tồn tại.";
+                return Page();
+            }
+
+            var result = await _signInManager.PasswordSignInAsync(
+                user.UserName!,
+                Input.Password,
+                Input.RememberMe,
+                lockoutOnFailure: false);
+
+            if (result.Succeeded)
+            {
+                return LocalRedirect(string.IsNullOrEmpty(ReturnUrl) ? "/" : ReturnUrl);
+            }
+
+            Error = "Đăng nhập thất bại. Vui lòng kiểm tra lại thông tin.";
             return Page();
         }
     }

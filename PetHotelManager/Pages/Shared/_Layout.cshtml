@@ -62,6 +62,8 @@
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="/Appointments">Lịch hẹn</a></li>
                                 <li><a class="dropdown-item" href="/Rooms">Tình trạng phòng</a></li>
+                                <li><a class="dropdown-item" href="/Appointments/Filter">Lọc lịch hẹn</a></li>
+                                <li><a class="dropdown-item" href="/MedicalRecords/Create">Tạo hồ sơ khám</a></li>
                                 <li><a class="dropdown-item" href="/Invoices">Hóa đơn</a></li>
                                 <li><a class="dropdown-item" href="/Inventory">Kho (giao dịch tồn)</a></li>
                             </ul>
@@ -100,7 +102,9 @@
                     <span class="me-3">Xin chào, @userName</span>
                     @if (isAuthenticated)
                     {
-                        <a class="btn btn-outline-light btn-sm" href="/Account/Logout">Đăng xuất</a>
+                        <form method="post" asp-page="/Account/Logout" class="d-inline">
+                            <button type="submit" class="btn btn-outline-light btn-sm">Đăng xuất</button>
+                        </form>
                     }
                     else
                     {

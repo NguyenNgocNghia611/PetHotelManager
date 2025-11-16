@@ -1,170 +1,108 @@
-@page "/medical-records/create"
+@page
 @model PetHotelManager.Pages.MedicalRecords.CreateModel
 @{
-    ViewData["Title"] = "Tạo Bệnh án mới";
+    ViewData["Title"] = "Tạo hồ sơ khám";
 }
 
-<h1>@ViewData["Title"]</h1>
-<hr />
+<h2 class="mb-3">Tạo hồ sơ khám</h2>
 
-<form id="recordForm">
-    <div class="row">
-        <div class="col-md-6 mb-3">
-            <label for="petSelect" class="form-label">Thú cưng</label>
-            <select id="petSelect" class="form-select" asp-items="Model.Pets">
-                <option value="">-- Chọn thú cưng --</option>
-            </select>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label for="examinationDate" class="form-label">Ngày khám</label>
-            <input type="datetime-local" id="examinationDate" class="form-control" />
-        </div>
-        <div class="col-md-6 mb-3">
-            <label for="symptoms" class="form-label">Triệu chứng</label>
-            <textarea id="symptoms" class="form-control" rows="3"></textarea>
-        </div>
-        <div class="col-md-6 mb-3">
-            <label for="diagnosis" class="form-label">Chẩn đoán</label>
-            <textarea id="diagnosis" class="form-control" rows="3"></textarea>
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+@if (!string.IsNullOrEmpty(Model.Success))
+{
+    <div class="alert alert-success">@Model.Success</div>
+}
+
+<form method="post" class="row g-3">
+    <div class="col-md-4">
+        <label class="form-label">Thú cưng</label>
+        <select class="form-select" asp-for="Form.PetId" required>
+            <option value="">-- chọn --</option>
+            @foreach (var p in Model.Pets)
+            {
+                <option value="@p.Id" selected="@(Model.Form.PetId == p.Id ? "selected" : null)">
+                    @p.Name (@p.Species) - @p.HealthStatus
+                </option>
+            }
+        </select>
+        <span class="text-danger" asp-validation-for="Form.PetId"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Ngày khám</label>
+        <input asp-for="Form.ExaminationDate" type="datetime-local" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.ExaminationDate"></span>
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">Triệu chứng</label>
+        <textarea asp-for="Form.Symptoms" rows="2" class="form-control"></textarea>
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label">Chẩn đoán</label>
+        <textarea asp-for="Form.Diagnosis" rows="2" class="form-control"></textarea>
+    </div>
+
+    <div class="col-12">
+        <h5 class="mt-3">Kê đơn thuốc</h5>
+
+        <table class="table table-sm">
+            <thead>
+                <tr>
+                    <th>Sản phẩm</th>
+                    <th>Số lượng</th>
+                    <th>Liều dùng (Dosage)</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            @for (int i = 0; i < Model.Form.Prescriptions.Count; i++)
+            {
+                <tr>
+                    <td>
+                        <select class="form-select" name="Form.Prescriptions[@i].ProductId">
+                            <option value="">-- chọn --</option>
+                            @foreach (var prod in Model.Products)
+                            {
+                                <option value="@prod.Id" selected="@(Model.Form.Prescriptions[i].ProductId == prod.Id ? "selected" : null)">
+                                    @prod.Name (Còn: @prod.StockQuantity @prod.Unit)
+                                </option>
+                            }
+                        </select>
+                    </td>
+                    <td>
+                        <input class="form-control form-control-sm" type="number" min="1" name="Form.Prescriptions[@i].Quantity" value="@Model.Form.Prescriptions[i].Quantity" />
+                    </td>
+                    <td>
+                        <input class="form-control form-control-sm" name="Form.Prescriptions[@i].Dosage" value="@Model.Form.Prescriptions[i].Dosage" />
+                    </td>
+                    <td>
+                        <form method="post" asp-page-handler="RemovePrescription">
+                            <input type="hidden" name="index" value="@i" />
+                            <button class="btn btn-sm btn-outline-danger" type="submit">&times;</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+
+        <div>
+            <form method="post" asp-page-handler="AddPrescription">
+                <button class="btn btn-sm btn-outline-primary" type="submit">+ Thêm dòng</button>
+            </form>
         </div>
     </div>
 
-    <hr />
-
-    <h4>Đơn thuốc</h4>
-    <div class="row align-items-end g-3 mb-3 p-3 border rounded">
-        <div class="col-md-4">
-            <label class="form-label">Thuốc</label>
-            <select id="productSelect" class="form-select" asp-items="Model.Products">
-                <option value="">-- Chọn thuốc --</option>
-            </select>
-        </div>
-        <div class="col-md-2">
-            <label class="form-label">Số lượng</label>
-            <input type="number" id="itemQuantity" class="form-control" value="1" min="1" />
-        </div>
-        <div class="col-md-4">
-            <label class="form-label">Liều lượng/Cách dùng</label>
-            <input type="text" id="itemDosage" class="form-control" placeholder="VD: 1 viên/ngày, sau bữa ăn" />
-        </div>
-        <div class="col-md-2">
-            <button type="button" id="addItemBtn" class="btn btn-success w-100">Thêm thuốc</button>
-        </div>
-    </div>
-
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Thuốc</th>
-                <th>Liều lượng/Cách dùng</th>
-                <th class="text-end">Số lượng</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody id="prescriptionDetailsBody">
-        </tbody>
-    </table>
-
-    <div class="mt-4">
-        <button type="submit" class="btn btn-primary">Lưu Bệnh án</button>
-        <a asp-page="/Index" class="btn btn-secondary">Quay lại Dashboard</a>
+    <div class="col-12 d-flex gap-2 mt-3">
+        <button class="btn btn-success" type="submit">Lưu hồ sơ</button>
+        <a href="/MedicalRecords" class="btn btn-outline-secondary">Quay lại</a>
     </div>
 </form>
 
 @section Scripts {
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
-    <script>
-        $(document).ready(function () {
-            // Set ngày giờ hiện tại
-            const now = new Date();
-            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
-            $('#examinationDate').val(now.toISOString().slice(0, 16));
-
-            // Nút "Thêm thuốc"
-            $('#addItemBtn').on('click', function () {
-                const quantity = parseInt($('#itemQuantity').val());
-                const productId = $('#productSelect').val();
-                const dosage = $('#itemDosage').val();
-
-                if (!productId || quantity <= 0) {
-                    alert('Vui lòng chọn thuốc và nhập số lượng hợp lệ.');
-                    return;
-                }
-
-                if ($(`#prescriptionDetailsBody tr[data-id='${productId}']`).length > 0) {
-                    alert('Thuốc này đã có trong đơn.');
-                    return;
-                }
-
-                const productName = $('#productSelect').find('option:selected').text();
-
-                const row = `
-                    <tr data-id="${productId}" data-quantity="${quantity}" data-dosage="${dosage}">
-                        <td>${productName}</td>
-                        <td>${dosage}</td>
-                        <td class="text-end">${quantity}</td>
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-danger remove-item-btn">Xóa</button>
-                        </td>
-                    </tr>`;
-
-                $('#prescriptionDetailsBody').append(row);
-            });
-
-            // Nút "Xóa" dòng
-            $('#prescriptionDetailsBody').on('click', '.remove-item-btn', function () {
-                $(this).closest('tr').remove();
-            });
-
-            // Xử lý Submit Form
-            $('#recordForm').on('submit', function (e) {
-                e.preventDefault();
-
-                const prescriptions = [];
-                $('#prescriptionDetailsBody tr').each(function () {
-                    prescriptions.push({
-                        productId: parseInt($(this).data('id')),
-                        quantity: parseInt($(this).data('quantity')),
-                        dosage: $(this).data('dosage')
-                    });
-                });
-
-                const recordData = {
-                    petId: parseInt($('#petSelect').val()),
-                    symptoms: $('#symptoms').val(),
-                    diagnosis: $('#diagnosis').val(),
-                    examinationDate: new Date($('#examinationDate').val()).toISOString(),
-                    prescriptions: prescriptions
-                };
-
-                if (!recordData.petId) {
-                    alert('Vui lòng chọn thú cưng.');
-                    return;
-                }
-
-                const cookie = document.cookie.split('; ').find(row => row.startsWith('.AspNetCore.Identity.Application='));
-
-                fetch('/api/medicalrecords', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(recordData)
-                })
-                .then(response => response.json().then(data => ({ status: response.status, body: data })))
-                .then(obj => {
-                    if (obj.status >= 200 && obj.status < 300) {
-                        alert('Tạo bệnh án thành công!');
-                        window.location.href = `/pets/details/${recordData.petId}`;
-                    } else {
-                         throw new Error(obj.body.message || JSON.stringify(obj.body));
-                    }
-                })
-                .catch(error => {
-                    console.error('Lỗi:', error);
-                    alert('Đã xảy ra lỗi khi tạo bệnh án. Chi tiết: ' + error.message);
-                });
-            });
-        });
-    </script>
+    <partial name="_ValidationScriptsPartial" />
 }
