@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PetHotelManager.Data;
 using PetHotelManager.DTOs.RoomTypes;
@@ -52,6 +53,7 @@ namespace PetHotelManager.Controllers
         }
 
         // Create
+        [Authorize(Roles = "Admin")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateRoomTypeDto dto)
         {
@@ -69,6 +71,7 @@ namespace PetHotelManager.Controllers
         }
 
         // Update
+        [Authorize(Roles = "Admin")]
         [HttpPut("{id}")]
         public async Task<IActionResult> Update(int id, [FromBody] UpdateRoomTypeDto dto)
         {
@@ -88,6 +91,7 @@ namespace PetHotelManager.Controllers
         }
 
         // Delete
+        [Authorize(Roles = "Admin")]
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {

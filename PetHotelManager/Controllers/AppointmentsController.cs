@@ -6,6 +6,7 @@ using PetHotelManager.Data;
 using PetHotelManager.DTOs.Appointments;
 using PetHotelManager.DTOs.Rooms;
 using PetHotelManager.Models;
+using System.Security.Claims;
 
 namespace PetHotelManager.Controllers
 {
@@ -21,7 +22,7 @@ namespace PetHotelManager.Controllers
         }
 
         // Tạo mới lịch hẹn
-        //[Authorize(Roles = "Customer,Staff")]
+        [Authorize(Roles = "Customer,Staff")]
         [HttpPost("create")]
         public async Task<IActionResult> CreateAppointment([FromBody] CreateAppointmentDto dto)
         {
@@ -69,7 +70,7 @@ namespace PetHotelManager.Controllers
 
 
         // Người đặt HUỶ lịch
-        //[Authorize(Roles = "Customer,Staff")]
+        [Authorize(Roles = "Customer,Staff")]
         [HttpPut("{id}/cancel")]
         public async Task<IActionResult> CancelAppointment(int id)
         {
@@ -80,6 +81,11 @@ namespace PetHotelManager.Controllers
             if (appointment.Status == "Cancelled")
                 return BadRequest(new { message = "Lịch hẹn đã bị hủy trước đó." });
 
+            // Check ownership if user is Customer
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (User.IsInRole("Customer") && appointment.UserId != currentUserId)
+                return Forbid();
+
             appointment.Status = "Cancelled";
             await _context.SaveChangesAsync();
 
@@ -87,7 +93,7 @@ namespace PetHotelManager.Controllers
         }
 
         // Người nhận TỪ CHỐI lịch
-        //[Authorize(Roles = "Staff,Veterinarian")]
+        [Authorize(Roles = "Staff,Veterinarian")]
         [HttpPut("{id}/reject")]
         public async Task<IActionResult> RejectAppointment(int id)
         {
@@ -123,7 +129,7 @@ namespace PetHotelManager.Controllers
         }
 
         // Danh sách tất cả lịch hẹn
-        //[Authorize(Roles = "Admin,Staff,Veterinarian")]
+        [Authorize(Roles = "Admin,Staff,Veterinarian")]
         [HttpGet]
         public async Task<ActionResult> GetAllAppointments(
             string? search,
@@ -184,10 +190,19 @@ namespace PetHotelManager.Controllers
         }
 
         // Chi tiết 1 lịch hẹn
-        //[Authorize(Roles = "Admin,Staff,Veterinarian,Customer")]
+        [Authorize(Roles = "Admin,Staff,Veterinarian,Customer")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetAppointmentDetail(int id)
         {
+            var appointmentEntity = await _context.Appointments.FindAsync(id);
+            if (appointmentEntity == null)
+                return NotFound(new { message = "Không tìm thấy lịch hẹn." });
+
+            // Check ownership if user is Customer
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (User.IsInRole("Customer") && appointmentEntity.UserId != currentUserId)
+                return Forbid();
+
             var appointment = await _context.Appointments
                 .Include(a => a.User)
                 .Include(a => a.Pet)
@@ -211,13 +226,11 @@ namespace PetHotelManager.Controllers
                 })
                 .FirstOrDefaultAsync();
 
-            if (appointment == null)
-                return NotFound(new { message = "Không tìm thấy lịch hẹn." });
-
             return Ok(appointment);
         }
 
         //  CHECK-IN
+        [Authorize(Roles = "Admin,Staff,Veterinarian")]
         [HttpGet("filter")]
         public async Task<IActionResult> FilterAppointmentsByStatus(
             [FromQuery] string status,
@@ -260,6 +273,7 @@ namespace PetHotelManager.Controllers
             });
         }
 
+        [Authorize(Roles = "Admin,Staff,Veterinarian")]
         [HttpPost("checkin/{appointmentId}")]
         public async Task<IActionResult> CheckIn(int appointmentId)
         {
@@ -300,6 +314,7 @@ namespace PetHotelManager.Controllers
         }
 
         //  CHECK-OUT
+        [Authorize(Roles = "Admin,Staff,Veterinarian")]
         [HttpPost("checkout/{appointmentId}")]
         public async Task<IActionResult> CheckOut(int appointmentId)
         {

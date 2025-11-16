@@ -10,7 +10,6 @@ using System.Security.Claims;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize(Roles = "Admin,Staff")]
 public class InvoicesController : ControllerBase
 {
     private readonly ApplicationDbContext _context;
@@ -21,6 +20,7 @@ public class InvoicesController : ControllerBase
     }
 
     // POST: api/invoices
+    [Authorize(Roles = "Admin,Staff")]
     [HttpPost]
     public async Task<IActionResult> CreateInvoice([FromBody] InvoiceCreateDto createDto)
     {
@@ -141,16 +141,25 @@ public class InvoicesController : ControllerBase
     }
 
     // GET: api/invoices
+    [Authorize(Roles = "Admin,Staff,Customer")]
     [HttpGet]
     public async Task<IActionResult> GetInvoices([FromQuery] string? userId, [FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10)
     {
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         var query = _context.Invoices
             .Include(i => i.User)
             .OrderByDescending(i => i.InvoiceDate)
             .AsQueryable();
 
-        if (!string.IsNullOrEmpty(userId))
+        // If user is Customer, always filter by their own userId
+        if (User.IsInRole("Customer"))
         {
+            query = query.Where(i => i.UserId == currentUserId);
+        }
+        else if (!string.IsNullOrEmpty(userId))
+        {
+            // Admin/Staff can filter by userId parameter
             query = query.Where(i => i.UserId == userId);
         }
 
@@ -179,6 +188,7 @@ public class InvoicesController : ControllerBase
     }
 
     // GET: api/invoices/{id}
+    [Authorize(Roles = "Admin,Staff,Customer")]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetInvoiceById(int id)
     {
@@ -195,6 +205,7 @@ public class InvoicesController : ControllerBase
                 i.InvoiceDate,
                 i.TotalAmount,
                 i.Status,
+                i.UserId,
                 Customer = new
                 {
                     Id = i.User.Id,
@@ -217,10 +228,16 @@ public class InvoicesController : ControllerBase
             return NotFound(new { Message = "Không tìm thấy hóa đơn." });
         }
 
+        // Check ownership if user is Customer
+        var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (User.IsInRole("Customer") && invoice.UserId != currentUserId)
+            return Forbid();
+
         return Ok(invoice);
     }
 
     // PUT: api/invoices/{id}/status
+    [Authorize(Roles = "Admin,Staff")]
     [HttpPut("{id}/status")]
     public async Task<IActionResult> UpdateInvoiceStatus(int id, [FromBody] InvoiceStatusUpdateDto statusDto)
     {
