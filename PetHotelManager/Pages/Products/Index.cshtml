@@ -1,157 +1,71 @@
-@page "/products"
+@page
 @model PetHotelManager.Pages.Products.IndexModel
 @{
-    ViewData["Title"] = "Quản lý Tồn kho";
+    ViewData["Title"] = "Quản lý Sản phẩm";
 }
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center mb-3">
-    <h1>📦 @ViewData["Title"]</h1>
-    <div class="btn-toolbar">
-        <a asp-page="/Inventory/Receive" class="btn btn-sm btn-success me-2">
-            <i class="bi bi-box-arrow-in-down"></i> Nhập kho
-        </a>
-        <a asp-page="Create" class="btn btn-sm btn-primary">
-            <i class="bi bi-plus-circle-fill"></i> Thêm sản phẩm
-        </a>
-    </div>
+<h2 class="mb-3">Quản lý Sản phẩm</h2>
+
+<div class="d-flex justify-content-between mb-3">
+    <form method="get" class="d-flex gap-2">
+        <input name="Search" value="@Model.Search" class="form-control form-control-sm" placeholder="Tìm theo tên / đơn vị" />
+        <button class="btn btn-sm btn-outline-primary">Lọc</button>
+    </form>
+    <a class="btn btn-sm btn-primary" href="/Products/Create">+ Thêm mới</a>
 </div>
 
-@* ⭐ THÊM: Banner cảnh báo *@
-@if (Model.LowStockCount > 0)
+@if (!string.IsNullOrEmpty(Model.Error))
 {
-    <div class="alert alert-warning alert-dismissible fade show" role="alert">
-        <strong>⚠️ Cảnh báo:</strong>
-        <a asp-page="Alerts" class="alert-link">
-            @Model.LowStockCount sản phẩm sắp hết hàng
-        </a>. Nhấp để xem chi tiết.
-        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-    </div>
+    <div class="alert alert-danger">@Model.Error</div>
+}
+@if (!string.IsNullOrEmpty(Model.Success))
+{
+    <div class="alert alert-success">@Model.Success</div>
 }
 
-@* ⭐ THÊM: Bộ lọc *@
-<form method="get" class="row g-3 mb-3">
-    <div class="col-md-4">
-        <div class="input-group">
-            <span class="input-group-text">🔍</span>
-            <input type="text" class="form-control" placeholder="Tìm kiếm sản phẩm..."
-                   asp-for="SearchTerm" />
-        </div>
-    </div>
-    <div class="col-md-3">
-        <select class="form-select" asp-for="CategoryFilter">
-            <option value="">-- Tất cả danh mục --</option>
-            <option value="Thuốc">Thuốc</option>
-            <option value="Thức ăn">Thức ăn</option>
-            <option value="Phụ kiện">Phụ kiện</option>
-            <option value="Chăm sóc">Chăm sóc</option>
-            <option value="Đồ chơi">Đồ chơi</option>
-        </select>
-    </div>
-    <div class="col-md-2">
-        <button type="submit" class="btn btn-secondary w-100">Tìm kiếm</button>
-    </div>
-    <div class="col-md-3">
-        <a asp-page="Index" class="btn btn-outline-secondary w-100">Xóa bộ lọc</a>
-    </div>
-</form>
-
 <div class="table-responsive">
-    <table class="table table-striped table-hover table-sm">
+    <table class="table table-sm align-middle">
         <thead>
             <tr>
-                <th scope="col">Sản phẩm</th>
-                <th scope="col">Danh mục</th>
-                <th scope="col" class="text-end">Giá</th>
-                <th scope="col" class="text-end">Tồn kho</th>
-                <th scope="col">Trạng thái</th>
-                <th scope="col" class="text-end">Hành động</th>
+                <th>#</th>
+                <th>Tên</th>
+                <th>Giá</th>
+                <th>Tồn kho</th>
+                <th>Đơn vị</th>
+                <th>Trạng thái</th>
+                <th style="width:160px"></th>
             </tr>
         </thead>
         <tbody>
-            @if (Model.ProductList.Count == 0)
+        @if (Model.Items.Count > 0)
+        {
+            foreach (var p in Model.Items)
             {
-                <tr>
-                    <td colspan="6" class="text-center text-muted py-4">
-                        Không có sản phẩm nào. <a asp-page="Create">Thêm sản phẩm mới</a>
+                <tr class="@(p.IsActive ? "" : "table-light")">
+                    <td>@p.Id</td>
+                    <td>@p.Name</td>
+                    <td>@p.Price.ToString("n0")</td>
+                    <td>@p.StockQuantity</td>
+                    <td>@p.Unit</td>
+                    <td>
+                        <span class="badge @(p.IsActive ? "bg-success" : "bg-secondary")">
+                            @(p.IsActive ? "Active" : "Inactive")
+                        </span>
+                    </td>
+                    <td class="d-flex gap-1">
+                        <a class="btn btn-sm btn-outline-secondary" href="/Products/Edit?id=@p.Id">Sửa</a>
+                        <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Xác nhận xóa sản phẩm?');">
+                            <input type="hidden" name="id" value="@p.Id" />
+                            <button class="btn btn-sm btn-outline-danger">Xóa</button>
+                        </form>
                     </td>
                 </tr>
             }
-            else
-            {
-                @foreach (var product in Model.ProductList)
-                {
-                    var rowClass = product.StockStatus switch
-                    {
-                        "OutOfStock" => "table-danger",
-                        "Critical" => "table-warning",
-                        "Warning" => "table-info",
-                        _ => ""
-                    };
-
-                    <tr class="@rowClass">
-                        <td>
-                            <strong>@product.Name</strong>
-                        </td>
-                        <td>
-                            @if (!string.IsNullOrEmpty(product.Category))
-                            {
-                                <span class="badge bg-secondary">@product.Category</span>
-                            }
-                        </td>
-                        <td class="text-end">@product.Price.ToString("N0") đ</td>
-                        <td class="text-end">
-                            <strong>@product.StockQuantity</strong> @product.Unit
-                            <br />
-                            <small class="text-muted">
-                                Min: @product.MinimumStock / Reorder: @product.ReorderLevel
-                            </small>
-                        </td>
-                        <td>
-                            @switch (product.StockStatus)
-                            {
-                                case "OutOfStock":
-                                    <span class="badge bg-danger">🔴 Hết hàng</span>
-                                    break;
-                                case "Critical":
-                                    <span class="badge bg-warning text-dark">🟠 Nguy cấp</span>
-                                    break;
-                                case "Warning":
-                                    <span class="badge bg-info text-dark">🟡 Cảnh báo</span>
-                                    break;
-                                default:
-                                    <span class="badge bg-success">🟢 Đủ hàng</span>
-                                    break;
-                            }
-                        </td>
-                        <td class="text-end">
-                            <form method="post" class="d-inline">
-                                <a asp-page="./Edit" asp-route-id="@product.Id"
-                                   class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-pencil"></i> Sửa
-                                </a>
-                                <button type="submit" asp-page-handler="Delete" asp-route-id="@product.Id"
-                                        class="btn btn-sm btn-outline-danger"
-                                        onclick="return confirm('Bạn có chắc muốn xóa sản phẩm này?')">
-                                    <i class="bi bi-trash"></i> Xóa
-                                </button>
-                            </form>
-                        </td>
-                    </tr>
-                }
-            }
+        }
+        else
+        {
+            <tr><td colspan="7" class="text-center text-muted">Không có dữ liệu</td></tr>
+        }
         </tbody>
     </table>
-</div>
-
-@* ⭐ THÊM: Footer thống kê *@
-<div class="d-flex justify-content-between align-items-center mt-3">
-    <div>
-        <strong>Tổng:</strong> @Model.ProductList.Count sản phẩm |
-        <strong>Giá trị tồn kho:</strong> @Model.TotalValue.ToString("N0") đ
-    </div>
-    <div>
-        <a asp-page="Alerts" class="btn btn-sm btn-outline-warning">
-            <i class="bi bi-exclamation-triangle"></i> Xem cảnh báo
-        </a>
-    </div>
 </div>

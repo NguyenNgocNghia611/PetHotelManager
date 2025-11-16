@@ -1,82 +1,98 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Net.Http.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PetHotelManager.DTOs.Product;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 
 namespace PetHotelManager.Pages.Products
 {
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin")]
     public class IndexModel : PageModel
     {
-        private readonly IHttpClientFactory _clientFactory;
+        private readonly IHttpClientFactory _http;
 
-        public IndexModel(IHttpClientFactory clientFactory)
+        public IndexModel(IHttpClientFactory httpClientFactory)
         {
-            _clientFactory = clientFactory;
+            _http = httpClientFactory;
         }
 
-        public IList<ProductDto> ProductList { get; set; } = new List<ProductDto>();
-
-        // ⭐ THÊM MỚI
-        public int LowStockCount { get; set; }
-        public decimal TotalValue { get; set; }
-
         [BindProperty(SupportsGet = true)]
-        public string? SearchTerm { get; set; }
+        public string? Search { get; set; }
 
-        [BindProperty(SupportsGet = true)]
-        public string? CategoryFilter { get; set; }
+        public List<ProductItem> Items { get; set; } = new();
+        public string? Error { get; set; }
+        public string? Success { get; set; }
 
-        private HttpClient GetAuthenticatedClient()
+        public async Task<IActionResult> OnGetAsync()
         {
-            var client = _clientFactory.CreateClient("ApiClient");
-            var token = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
-            if (token != null)
+            try
             {
-                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var client  = _http.CreateClient();
+
+                // Forward cookie để API nhận diện Admin
+                var cookieHeader = Request.Headers.Cookie.ToString();
+                if (!string.IsNullOrEmpty(cookieHeader))
+                    client.DefaultRequestHeaders.Add("Cookie", cookieHeader);
+
+                var list = await client.GetFromJsonAsync<List<ProductItem>>($"{baseUrl}/api/Products")
+                           ?? new List<ProductItem>();
+
+                if (!string.IsNullOrWhiteSpace(Search))
+                {
+                    var keyword = Search.Trim().ToLower();
+                    list = list.Where(p =>
+                        (p.Name ?? string.Empty).ToLower().Contains(keyword) ||
+                        (p.Unit ?? string.Empty).ToLower().Contains(keyword)
+                    ).ToList();
+                }
+
+                Items = list.OrderByDescending(p => p.IsActive).ThenBy(p => p.Name).ToList();
             }
-            return client;
-        }
-
-        public async Task OnGetAsync()
-        {
-            var client = GetAuthenticatedClient();
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-
-            // Build query string
-            var queryParams = new List<string>();
-            if (!string.IsNullOrEmpty(SearchTerm))
+            catch (Exception ex)
             {
-                queryParams.Add($"search={Uri.EscapeDataString(SearchTerm)}");
-            }
-            if (!string.IsNullOrEmpty(CategoryFilter))
-            {
-                queryParams.Add($"category={Uri.EscapeDataString(CategoryFilter)}");
+                Error = ex.Message;
             }
 
-            var queryString = queryParams.Count > 0 ? "?" + string.Join("&", queryParams) : "";
-
-            ProductList = await client.GetFromJsonAsync<List<ProductDto>>($"{baseUrl}/api/products{queryString}")
-                          ?? new List<ProductDto>();
-
-            // ⭐ Tính toán thống kê
-            LowStockCount = ProductList.Count(p => p.StockStatus != "Normal");
-            TotalValue = ProductList.Sum(p => p.StockQuantity * p.Price);
+            return Page();
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
-            var client = GetAuthenticatedClient();
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            try
+            {
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var client  = _http.CreateClient();
 
-            await client.DeleteAsync($"{baseUrl}/api/products/{id}");
+                var cookieHeader = Request.Headers.Cookie.ToString();
+                if (!string.IsNullOrEmpty(cookieHeader))
+                    client.DefaultRequestHeaders.Add("Cookie", cookieHeader);
 
-            return RedirectToPage();
+                var res = await client.DeleteAsync($"{baseUrl}/api/Products/{id}");
+                if (res.IsSuccessStatusCode)
+                {
+                    Success = "Xóa sản phẩm thành công.";
+                }
+                else
+                {
+                    Error = $"Xóa thất bại: {(int)res.StatusCode} - {await res.Content.ReadAsStringAsync()}";
+                }
+            }
+            catch (Exception ex)
+            {
+                Error = ex.Message;
+            }
+
+            return RedirectToPage(new { Search });
+        }
+
+        public class ProductItem
+        {
+            public int Id { get; set; }
+            public string Name { get; set; } = "";
+            public decimal Price { get; set; }
+            public int StockQuantity { get; set; }
+            public string Unit { get; set; } = "";
+            public bool IsActive { get; set; }
         }
     }
 }

@@ -1,120 +1,50 @@
-@page "/products/edit/{id:int}"
+@page
 @model PetHotelManager.Pages.Products.EditModel
 @{
-    ViewData["Title"] = "Chỉnh sửa Sản phẩm";
+    ViewData["Title"] = "Sửa sản phẩm";
 }
 
-<h1>@ViewData["Title"]</h1>
-<hr />
+<h2 class="mb-3">Sửa sản phẩm #@Model.Form.Id</h2>
 
-<div class="row">
-    <div class="col-md-8">
-        <form method="post">
-            <input type="hidden" asp-for="Input.Id" />
-            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
 
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="mb-0">📝 Thông tin cơ bản</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-8 mb-3">
-                            <label asp-for="Input.Name" class="form-label">Tên sản phẩm (*)</label>
-                            <input asp-for="Input.Name" class="form-control" />
-                            <span asp-validation-for="Input.Name" class="text-danger"></span>
-                        </div>
-
-                        <div class="col-md-4 mb-3">
-                            <label asp-for="Input.Category" class="form-label">Danh mục</label>
-                            <select asp-for="Input.Category" class="form-select">
-                                <option value="">-- Chọn danh mục --</option>
-                                <option value="Thuốc">Thuốc</option>
-                                <option value="Thức ăn">Thức ăn</option>
-                                <option value="Phụ kiện">Phụ kiện</option>
-                                <option value="Chăm sóc">Chăm sóc</option>
-                                <option value="Đồ chơi">Đồ chơi</option>
-                                <option value="Vật tư y tế">Vật tư y tế</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label asp-for="Input.Price" class="form-label">Giá bán (*)</label>
-                            <div class="input-group">
-                                <input asp-for="Input.Price" class="form-control" type="number" step="1000" />
-                                <span class="input-group-text">đ</span>
-                            </div>
-                            <span asp-validation-for="Input.Price" class="text-danger"></span>
-                        </div>
-
-                        <div class="col-md-4 mb-3">
-                            <label asp-for="Input.StockQuantity" class="form-label">Tồn kho hiện tại</label>
-                            <input asp-for="Input.StockQuantity" class="form-control" type="number" readonly />
-                            <small class="form-text text-muted">
-                                ⚠️ Sửa tồn kho qua <a asp-page="/Inventory/Receive">Nhập kho</a>
-                            </small>
-                        </div>
-
-                        <div class="col-md-4 mb-3">
-                            <label asp-for="Input.Unit" class="form-label">Đơn vị tính (*)</label>
-                            <input asp-for="Input.Unit" class="form-control" />
-                            <span asp-validation-for="Input.Unit" class="text-danger"></span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card mb-3">
-                <div class="card-header">
-                    <h5 class="mb-0">📦 Quản lý kho</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="Input.MinimumStock" class="form-label">
-                                Mức tồn kho tối thiểu
-                            </label>
-                            <input asp-for="Input.MinimumStock" class="form-control" type="number" />
-                            <span asp-validation-for="Input.MinimumStock" class="text-danger"></span>
-                            <small class="form-text text-muted">
-                                🔴 Cảnh báo NGHIÊM TRỌNG khi &lt; mức này
-                            </small>
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label asp-for="Input.ReorderLevel" class="form-label">
-                                Mức đặt hàng lại
-                            </label>
-                            <input asp-for="Input.ReorderLevel" class="form-control" type="number" />
-                            <span asp-validation-for="Input.ReorderLevel" class="text-danger"></span>
-                            <small class="form-text text-muted">
-                                🟡 Cảnh báo NÊN ĐẶT HÀNG khi &lt; mức này
-                            </small>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="form-check mb-3">
-                <input asp-for="Input.IsActive" class="form-check-input" type="checkbox" />
-                <label asp-for="Input.IsActive" class="form-check-label">
-                    Đang kinh doanh
-                </label>
-            </div>
-
-            <div class="d-flex gap-2">
-                <button type="submit" class="btn btn-primary">
-                    <i class="bi bi-check-circle"></i> Lưu thay đổi
-                </button>
-                <a asp-page="./Index" class="btn btn-secondary">
-                    <i class="bi bi-arrow-left"></i> Quay lại
-                </a>
-            </div>
-        </form>
+<form method="post" class="row g-3">
+    <input type="hidden" asp-for="Form.Id" />
+    <div class="col-md-6">
+        <label class="form-label">Tên</label>
+        <input asp-for="Form.Name" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Name"></span>
     </div>
-</div>
+    <div class="col-md-3">
+        <label class="form-label">Giá</label>
+        <input asp-for="Form.Price" type="number" step="0.01" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Price"></span>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Tồn kho</label>
+        <input asp-for="Form.StockQuantity" type="number" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.StockQuantity"></span>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Đơn vị</label>
+        <input asp-for="Form.Unit" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Unit"></span>
+    </div>
+    <div class="col-md-3 d-flex align-items-center">
+        <div class="form-check mt-4">
+            <input class="form-check-input" asp-for="Form.IsActive" />
+            <label class="form-check-label" asp-for="Form.IsActive">Hoạt động</label>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary">Lưu</button>
+        <a href="/Products" class="btn btn-outline-secondary">Hủy</a>
+    </div>
+</form>
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />

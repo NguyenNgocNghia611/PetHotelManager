@@ -1,50 +1,83 @@
+using System.ComponentModel.DataAnnotations;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PetHotelManager.DTOs.Product;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 
 namespace PetHotelManager.Pages.Products
 {
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin")]
     public class CreateModel : PageModel
     {
-        private readonly IHttpClientFactory _clientFactory;
+        private readonly IHttpClientFactory _http;
 
-        public CreateModel(IHttpClientFactory clientFactory)
+        public CreateModel(IHttpClientFactory httpClientFactory)
         {
-            _clientFactory = clientFactory;
+            _http = httpClientFactory;
         }
 
-        [BindProperty]
-        public CreateProductDto Input { get; set; }
+        [BindProperty] public CreateProductForm Form { get; set; } = new();
+
+        public string? Error { get; set; }
 
         public void OnGet() { }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid) return Page();
+            if (!ModelState.IsValid)
+                return Page();
 
-            var client = _clientFactory.CreateClient("ApiClient");
-            var token  = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
-            if (token != null)
+            try
             {
-                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var client  = _http.CreateClient();
+
+                var cookieHeader = Request.Headers.Cookie.ToString();
+                if (!string.IsNullOrEmpty(cookieHeader))
+                    client.DefaultRequestHeaders.Add("Cookie", cookieHeader);
+
+                var dto = new
+                {
+                    Name          = Form.Name,
+                    Price         = Form.Price,
+                    StockQuantity = Form.StockQuantity,
+                    Unit          = Form.Unit,
+                    IsActive      = Form.IsActive
+                };
+
+                var res = await client.PostAsJsonAsync($"{baseUrl}/api/Products", dto);
+                if (res.IsSuccessStatusCode)
+                {
+                    return RedirectToPage("/Products/Index");
+                }
+                else
+                {
+                    var body = await res.Content.ReadAsStringAsync();
+                    Error = $"API /api/Products trả về {(int)res.StatusCode}: {body}";
+                }
             }
-
-            var baseUrl  = $"{Request.Scheme}://{Request.Host}";
-            var response = await client.PostAsJsonAsync($"{baseUrl}/api/products", Input);
-
-            if (response.IsSuccessStatusCode)
+            catch (Exception ex)
             {
-                return RedirectToPage("./Index");
+                Error = ex.Message;
             }
-
-            var errorContent = await response.Content.ReadAsStringAsync();
-            ModelState.AddModelError(string.Empty, $"Lỗi từ API: {errorContent}");
             return Page();
+        }
+
+        public class CreateProductForm
+        {
+            [Required, StringLength(200)]
+            public string Name { get; set; } = "";
+
+            [Range(0, 100000000)]
+            public decimal Price { get; set; }
+
+            [Range(0, int.MaxValue)]
+            public int StockQuantity { get; set; }
+
+            [Required, StringLength(50)]
+            public string Unit { get; set; } = "";
+
+            public bool IsActive { get; set; } = true;
         }
     }
 }

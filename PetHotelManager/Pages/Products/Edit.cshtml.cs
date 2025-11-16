@@ -1,81 +1,135 @@
+using System.ComponentModel.DataAnnotations;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PetHotelManager.DTOs.Product;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 
 namespace PetHotelManager.Pages.Products
 {
-    [Authorize(Roles = "Admin,Staff")]
+    [Authorize(Roles = "Admin")]
     public class EditModel : PageModel
     {
-        private readonly IHttpClientFactory _clientFactory;
+        private readonly IHttpClientFactory _http;
+        public EditModel(IHttpClientFactory httpClientFactory) => _http = httpClientFactory;
 
-        public EditModel(IHttpClientFactory clientFactory)
-        {
-            _clientFactory = clientFactory;
-        }
+        [BindProperty(SupportsGet = true)]
+        public int Id { get; set; }
 
         [BindProperty]
-        public UpdateProductDto Input { get; set; }
+        public EditProductForm Form { get; set; } = new();
 
-        public async Task<IActionResult> OnGetAsync(int id)
+        public string? Error { get; set; }
+
+        public async Task<IActionResult> OnGetAsync()
         {
-            var client = _clientFactory.CreateClient("ApiClient");
-            var token = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
-            if (token != null)
+            try
             {
-                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var client  = _http.CreateClient();
+
+                var cookieHeader = Request.Headers.Cookie.ToString();
+                if (!string.IsNullOrEmpty(cookieHeader))
+                    client.DefaultRequestHeaders.Add("Cookie", cookieHeader);
+
+                var res = await client.GetAsync($"{baseUrl}/api/Products/{Id}");
+                if (!res.IsSuccessStatusCode)
+                {
+                    Error = $"Không tải được sản phẩm. {(int)res.StatusCode} - {await res.Content.ReadAsStringAsync()}";
+                    return Page();
+                }
+
+                var p = await res.Content.ReadFromJsonAsync<ProductDetail>();
+                if (p == null)
+                {
+                    Error = "Không tìm thấy sản phẩm.";
+                    return Page();
+                }
+
+                Form = new EditProductForm
+                {
+                    Id            = p.Id,
+                    Name          = p.Name,
+                    Price         = p.Price,
+                    StockQuantity = p.StockQuantity,
+                    Unit          = p.Unit,
+                    IsActive      = p.IsActive
+                };
             }
-
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var productDto = await client.GetFromJsonAsync<ProductDto>($"{baseUrl}/api/products/{id}");
-
-            if (productDto == null) return NotFound();
-
-            Input = new UpdateProductDto
+            catch (Exception ex)
             {
-                Id = productDto.Id,
-                Name = productDto.Name,
-                Price = productDto.Price,
-                StockQuantity = productDto.StockQuantity,
-                Unit = productDto.Unit,
-
-                // ⭐ THÊM MỚI
-                MinimumStock = productDto.MinimumStock,
-                ReorderLevel = productDto.ReorderLevel,
-                Category = productDto.Category,
-                IsActive = productDto.IsActive
-            };
-
+                Error = ex.Message;
+            }
             return Page();
         }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid) return Page();
+            if (!ModelState.IsValid)
+                return Page();
 
-            var client = _clientFactory.CreateClient("ApiClient");
-            var token = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
-            if (token != null)
+            try
             {
-                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var client  = _http.CreateClient();
+
+                var cookieHeader = Request.Headers.Cookie.ToString();
+                if (!string.IsNullOrEmpty(cookieHeader))
+                    client.DefaultRequestHeaders.Add("Cookie", cookieHeader);
+
+                var dto = new
+                {
+                    Id            = Form.Id,
+                    Name          = Form.Name,
+                    Price         = Form.Price,
+                    StockQuantity = Form.StockQuantity,
+                    Unit          = Form.Unit,
+                    IsActive      = Form.IsActive
+                };
+
+                var res = await client.PutAsJsonAsync($"{baseUrl}/api/Products/{Form.Id}", dto);
+                if (res.IsSuccessStatusCode)
+                {
+                    return RedirectToPage("/Products/Index");
+                }
+                else
+                {
+                    Error = $"Cập nhật thất bại: {(int)res.StatusCode} - {await res.Content.ReadAsStringAsync()}";
+                }
             }
-
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var response = await client.PutAsJsonAsync($"{baseUrl}/api/products/{Input.Id}", Input);
-
-            if (response.IsSuccessStatusCode)
+            catch (Exception ex)
             {
-                TempData["SuccessMessage"] = "Cập nhật sản phẩm thành công!";
-                return RedirectToPage("./Index");
+                Error = ex.Message;
             }
-
-            var errorContent = await response.Content.ReadAsStringAsync();
-            ModelState.AddModelError(string.Empty, $"Lỗi từ API: {errorContent}");
             return Page();
+        }
+
+        public class ProductDetail
+        {
+            public int Id { get; set; }
+            public string Name { get; set; } = "";
+            public decimal Price { get; set; }
+            public int StockQuantity { get; set; }
+            public string Unit { get; set; } = "";
+            public bool IsActive { get; set; }
+        }
+
+        public class EditProductForm
+        {
+            public int Id { get; set; }
+
+            [Required, StringLength(200)]
+            public string Name { get; set; } = "";
+
+            [Range(0, 100000000)]
+            public decimal Price { get; set; }
+
+            [Range(0, int.MaxValue)]
+            public int StockQuantity { get; set; }
+
+            [Required, StringLength(50)]
+            public string Unit { get; set; } = "";
+
+            public bool IsActive { get; set; }
         }
     }
 }
