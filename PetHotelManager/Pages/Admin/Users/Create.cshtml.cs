@@ -19,7 +19,7 @@ namespace PetHotelManager.Pages.Admin.Users
 
         [BindProperty] public AdminCreateUserDto Input { get; set; }
 
-        public List<string> Roles { get; set; } = new List<string> { "Staff", "Doctor" };
+        public List<string> Roles { get; set; } = new List<string> { "Staff", "Veterinarian" };
 
         public void OnGet() { }
 

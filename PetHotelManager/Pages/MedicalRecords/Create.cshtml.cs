@@ -7,7 +7,7 @@ using System.Security.Claims;
 
 namespace PetHotelManager.Pages.MedicalRecords
 {
-    [Authorize(Roles = "Staff,Doctor,Veterinarian")]
+    [Authorize(Roles = "Staff,Veterinarian")]
     public class CreateModel : PageModel
     {
         private readonly IHttpClientFactory _http;

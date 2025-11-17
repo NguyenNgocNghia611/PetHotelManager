@@ -13,7 +13,7 @@ namespace PetHotelManager.Pages
             if (User.IsInRole("Admin"))
                 return Redirect("/Services"); // hoặc /Admin/Dashboard nếu có
 
-            if (User.IsInRole("Staff") || User.IsInRole("Veterinarian") || User.IsInRole("Doctor"))
+            if (User.IsInRole("Staff") || User.IsInRole("Veterinarian"))
                 return Redirect("/Appointments/Filter");
 
             if (User.IsInRole("Customer"))

@@ -6,7 +6,7 @@ using PetHotelManager.Data;
 
 namespace PetHotelManager.Pages.Rooms
 {
-    [Authorize(Roles = "Admin,Staff,Veterinarian,Doctor")]
+    [Authorize(Roles = "Admin,Staff,Veterinarian")]
     public class StatusModel : PageModel
     {
         private readonly ApplicationDbContext _context;
