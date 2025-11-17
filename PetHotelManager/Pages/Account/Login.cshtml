@@ -4,27 +4,44 @@
 ViewData["Title"] = "Đăng nhập";
 }
 
-<h2>Đăng nhập</h2>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h2 class="mb-0">Đăng nhập</h2>
+            </div>
+            <div class="card-body">
+                @if (TempData["SuccessMessage"] != null)
+                {
+                    <div class="alert alert-success">@TempData["SuccessMessage"]</div>
+                }
 
-@if (!string.IsNullOrEmpty(Model.Error))
-{
-<div class="alert alert-danger">@Model.Error</div>
-}
+                @if (!string.IsNullOrEmpty(Model.Error))
+                {
+                    <div class="alert alert-danger">@Model.Error</div>
+                }
 
-<form method="post" class="mt-3" asp-route-ReturnUrl="@Model.ReturnUrl">
-    <div class="mb-3">
-        <label class="form-label">Tên đăng nhập hoặc Email</label>
-        <input asp-for="Input.UserNameOrEmail" class="form-control" />
-        <span class="text-danger" asp-validation-for="Input.UserNameOrEmail"></span>
+                <form method="post" asp-route-ReturnUrl="@Model.ReturnUrl">
+                    <div class="mb-3">
+                        <label class="form-label">Tên đăng nhập hoặc Email</label>
+                        <input asp-for="Input.UserNameOrEmail" class="form-control" placeholder="Nhập tên đăng nhập hoặc email" />
+                        <span class="text-danger" asp-validation-for="Input.UserNameOrEmail"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mật khẩu</label>
+                        <input asp-for="Input.Password" class="form-control" placeholder="Nhập mật khẩu" />
+                        <span class="text-danger" asp-validation-for="Input.Password"></span>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input asp-for="Input.RememberMe" class="form-check-input" />
+                        <label class="form-check-label" for="Input_RememberMe">Ghi nhớ đăng nhập</label>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Đăng nhập</button>
+                        <a asp-page="/Account/Register" class="btn btn-outline-secondary">Chưa có tài khoản? Đăng ký</a>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-    <div class="mb-3">
-        <label class="form-label">Mật khẩu</label>
-        <input asp-for="Input.Password" class="form-control" />
-        <span class="text-danger" asp-validation-for="Input.Password"></span>
-    </div>
-    <div class="form-check mb-3">
-        <input asp-for="Input.RememberMe" class="form-check-input" />
-        <label class="form-check-label" for="Input_RememberMe">Ghi nhớ đăng nhập</label>
-    </div>
-    <button class="btn btn-primary">Đăng nhập</button>
-</form>
+</div>
