@@ -1,0 +1,152 @@
+@page
+@model PetHotelManager.Pages.Veterinarian.Appointments.MyModel
+@{
+    ViewData["Title"] = "Lịch hẹn của tôi";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Lịch hẹn được giao cho tôi</h2>
+
+    @if (!string.IsNullOrEmpty(Model.SuccessMessage))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @Model.SuccessMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @Model.ErrorMessage
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i> 
+        <strong>Lưu ý:</strong> Do hạn chế của API, hệ thống tải danh sách lịch hẹn và lọc các lịch được giao cho bạn. 
+        Trang này hiển thị tối đa @Model.PageSize lịch hẹn mỗi trang.
+    </div>
+
+    @if (Model.MyAppointments.Any())
+    {
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Danh sách Lịch hẹn (@Model.MyAppointments.Count)</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th>Mã</th>
+                                <th>Khách hàng</th>
+                                <th>Thú cưng</th>
+                                <th>Dịch vụ</th>
+                                <th>Phòng</th>
+                                <th>Ngày hẹn</th>
+                                <th>Trạng thái</th>
+                                <th>Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var appointment in Model.MyAppointments)
+                            {
+                                <tr>
+                                    <td>#@appointment.Id</td>
+                                    <td>@(appointment.CustomerName ?? "-")</td>
+                                    <td>@(appointment.PetName ?? "-")</td>
+                                    <td>@(appointment.ServiceName ?? "-")</td>
+                                    <td>@(appointment.RoomName ?? "-")</td>
+                                    <td>@appointment.AppointmentDate.ToString("dd/MM/yyyy HH:mm")</td>
+                                    <td>
+                                        @if (appointment.Status == "Pending")
+                                        {
+                                            <span class="badge bg-warning">Chờ xử lý</span>
+                                        }
+                                        else if (appointment.Status == "Accepted")
+                                        {
+                                            <span class="badge bg-success">Đã chấp nhận</span>
+                                        }
+                                        else if (appointment.Status == "Rejected")
+                                        {
+                                            <span class="badge bg-danger">Đã từ chối</span>
+                                        }
+                                        else if (appointment.Status == "CheckedIn")
+                                        {
+                                            <span class="badge bg-info">Đã check-in</span>
+                                        }
+                                        else if (appointment.Status == "CheckedOut")
+                                        {
+                                            <span class="badge bg-secondary">Đã check-out</span>
+                                        }
+                                        else if (appointment.Status == "Cancelled")
+                                        {
+                                            <span class="badge bg-dark">Đã hủy</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">@appointment.Status</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        @if (appointment.Status == "Pending")
+                                        {
+                                            <form method="post" class="d-inline">
+                                                <button type="submit" asp-page-handler="Accept" asp-route-id="@appointment.Id" 
+                                                        class="btn btn-sm btn-success" 
+                                                        onclick="return confirm('Bạn có chắc muốn chấp nhận lịch hẹn này?');">
+                                                    Chấp nhận
+                                                </button>
+                                            </form>
+                                            <form method="post" class="d-inline">
+                                                <button type="submit" asp-page-handler="Reject" asp-route-id="@appointment.Id" 
+                                                        class="btn btn-sm btn-danger" 
+                                                        onclick="return confirm('Bạn có chắc muốn từ chối lịch hẹn này?');">
+                                                    Từ chối
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">-</span>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Page navigation" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                        <a class="page-link" asp-page="./My" asp-route-pageNumber="@(Model.PageNumber - 1)">Trước</a>
+                    </li>
+                    
+                    @for (int i = 1; i <= Model.TotalPages; i++)
+                    {
+                        <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                            <a class="page-link" asp-page="./My" asp-route-pageNumber="@i">@i</a>
+                        </li>
+                    }
+                    
+                    <li class="page-item @(Model.PageNumber >= Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-page="./My" asp-route-pageNumber="@(Model.PageNumber + 1)">Sau</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    }
+    else
+    {
+        <div class="alert alert-secondary">
+            <i class="bi bi-calendar-x"></i> Không có lịch hẹn nào được giao cho bạn.
+        </div>
+    }
+</div>

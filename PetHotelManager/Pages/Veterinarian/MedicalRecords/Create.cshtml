@@ -1,0 +1,139 @@
+@page
+@model PetHotelManager.Pages.Veterinarian.MedicalRecords.CreateModel
+@{
+    ViewData["Title"] = "Tạo Hồ sơ Y tế";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Tạo Hồ sơ Y tế Mới</h2>
+
+    @if (!string.IsNullOrEmpty(Model.Success))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            @Model.Success
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    @if (!string.IsNullOrEmpty(Model.Error))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @Model.Error
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    }
+
+    <form method="post">
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Thông tin Khám</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label">Thú cưng <span class="text-danger">*</span></label>
+                        <select asp-for="Form.PetId" class="form-select">
+                            <option value="">-- Chọn thú cưng --</option>
+                            @foreach (var pet in Model.Pets)
+                            {
+                                <option value="@pet.Id">@pet.Name (@pet.Species) - Chủ: @pet.OwnerName</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Form.PetId" class="text-danger"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Ngày khám <span class="text-danger">*</span></label>
+                        <input asp-for="Form.ExaminationDate" type="datetime-local" class="form-control" />
+                        <span asp-validation-for="Form.ExaminationDate" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Triệu chứng</label>
+                    <textarea asp-for="Form.Symptoms" class="form-control" rows="3" 
+                              placeholder="Mô tả các triệu chứng quan sát được..."></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Chẩn đoán</label>
+                    <textarea asp-for="Form.Diagnosis" class="form-control" rows="3" 
+                              placeholder="Chẩn đoán của bác sĩ..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Đơn Thuốc</h5>
+                <button type="submit" asp-page-handler="AddPrescription" class="btn btn-light btn-sm">
+                    <i class="bi bi-plus-circle"></i> Thêm thuốc
+                </button>
+            </div>
+            <div class="card-body">
+                @if (Model.Form.Prescriptions.Any())
+                {
+                    <div class="table-responsive">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th style="width: 40%">Thuốc</th>
+                                    <th style="width: 15%">Số lượng</th>
+                                    <th style="width: 30%">Liều dùng</th>
+                                    <th style="width: 15%">Xóa</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (int i = 0; i < Model.Form.Prescriptions.Count; i++)
+                                {
+                                    <tr>
+                                        <td>
+                                            <select asp-for="Form.Prescriptions[i].ProductId" class="form-select">
+                                                <option value="">-- Chọn thuốc --</option>
+                                                @foreach (var product in Model.Products)
+                                                {
+                                                    <option value="@product.Id">
+                                                        @product.Name (@product.Unit) - Tồn: @product.StockQuantity
+                                                    </option>
+                                                }
+                                            </select>
+                                        </td>
+                                        <td>
+                                            <input asp-for="Form.Prescriptions[i].Quantity" type="number" 
+                                                   class="form-control" min="0" />
+                                            <span asp-validation-for="Form.Prescriptions[i].Quantity" class="text-danger"></span>
+                                        </td>
+                                        <td>
+                                            <input asp-for="Form.Prescriptions[i].Dosage" type="text" 
+                                                   class="form-control" placeholder="VD: 2 viên/ngày" />
+                                        </td>
+                                        <td>
+                                            <button type="submit" asp-page-handler="RemovePrescription" 
+                                                    asp-route-index="@i" class="btn btn-danger btn-sm w-100">
+                                                Xóa
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">Chưa có thuốc nào. Nhấn "Thêm thuốc" để kê đơn.</p>
+                }
+            </div>
+        </div>
+
+        <div class="d-flex justify-content-between">
+            <a asp-page="./Index" class="btn btn-secondary">Hủy</a>
+            <button type="submit" class="btn btn-primary btn-lg">
+                <i class="bi bi-save"></i> Lưu Hồ sơ
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

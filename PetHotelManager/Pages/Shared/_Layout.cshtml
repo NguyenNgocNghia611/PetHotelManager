@@ -84,8 +84,12 @@
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Bác sĩ thú y</a>
                             <ul class="dropdown-menu">
-                                <li><a class="dropdown-item" href="/Appointments">Lịch hẹn</a></li>
-                                <li><a class="dropdown-item" href="/MedicalRecords">Hồ sơ khám</a></li>
+                                <li><a class="dropdown-item" asp-page="/Veterinarian/MedicalRecords/Index">Quản lý Hồ sơ Y tế</a></li>
+                                <li><a class="dropdown-item" asp-page="/Veterinarian/MedicalRecords/Create">Tạo Hồ sơ Y tế</a></li>
+                                <li><hr class="dropdown-divider"/></li>
+                                <li><a class="dropdown-item" asp-page="/Veterinarian/Appointments/My">Lịch hẹn của tôi</a></li>
+                                <li><hr class="dropdown-divider"/></li>
+                                <li><a class="dropdown-item" asp-page="/Veterinarian/Pets/Index">Danh sách Thú cưng</a></li>
                             </ul>
                         </li>
                     }
