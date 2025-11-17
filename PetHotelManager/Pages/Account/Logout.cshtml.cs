@@ -30,6 +30,9 @@ namespace PetHotelManager.Pages.Account
             // Xóa thêm (thường không cần, bổ sung để chắc chắn)
             await HttpContext.SignOutAsync(IdentityConstants.ApplicationScheme);
 
+            // Clear the JWT cookie that we set during login (if we stored one separately)
+            Response.Cookies.Delete("ApiToken");
+
             // Nếu bạn có JWT lưu ở localStorage trong SPA khác thì cần tự xóa phía client.
             return RedirectToPage("/Index");
         }

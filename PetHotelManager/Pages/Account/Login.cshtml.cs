@@ -1,10 +1,15 @@
 using System.ComponentModel.DataAnnotations;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using PetHotelManager.DTOs.Auth;
+using PetHotelManager.Models;
 
 namespace PetHotelManager.Pages.Account
 {
@@ -12,10 +17,17 @@ namespace PetHotelManager.Pages.Account
     public class LoginModel : PageModel
     {
         private readonly IHttpClientFactory _clientFactory;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<ApplicationUser> _userManager;
 
-        public LoginModel(IHttpClientFactory clientFactory)
+        public LoginModel(
+            IHttpClientFactory clientFactory,
+            SignInManager<ApplicationUser> signInManager,
+            UserManager<ApplicationUser> userManager)
         {
             _clientFactory = clientFactory;
+            _signInManager = signInManager;
+            _userManager = userManager;
         }
 
         [BindProperty]
@@ -74,37 +86,49 @@ namespace PetHotelManager.Pages.Account
                         PropertyNameCaseInsensitive = true
                     });
 
-                    if (loginResponse?.Token != null)
+                    if (loginResponse?.Token != null && loginResponse.User != null)
                     {
-                        // Store JWT token in cookie to match existing pattern
-                        var cookieOptions = new CookieOptions
+                        // Get the user from the database to sign them in properly
+                        var user = await _userManager.FindByNameAsync(Input.Username);
+                        if (user != null)
                         {
-                            HttpOnly = true,
-                            Secure = Request.IsHttps,
-                            SameSite = SameSiteMode.Lax,
-                            Expires = Input.RememberMe 
-                                ? DateTimeOffset.UtcNow.AddDays(30) 
-                                : DateTimeOffset.UtcNow.AddHours(3)
-                        };
-                        
-                        Response.Cookies.Append(".AspNetCore.Identity.Application", loginResponse.Token, cookieOptions);
+                            // Sign in the user using Identity (this creates the proper authentication cookie)
+                            await _signInManager.SignInAsync(user, isPersistent: Input.RememberMe);
 
-                        // Determine redirect based on user roles
-                        var roles = loginResponse.User?.Roles ?? new List<string>();
-                        var isCustomer = roles.Contains("Customer");
-                        var isHotel = roles.Contains("Admin") || roles.Contains("Staff") || roles.Contains("Veterinarian");
+                            // Store the JWT token in a separate cookie for API calls
+                            var cookieOptions = new CookieOptions
+                            {
+                                HttpOnly = true,
+                                Secure = Request.IsHttps,
+                                SameSite = SameSiteMode.Lax,
+                                Expires = Input.RememberMe 
+                                    ? DateTimeOffset.UtcNow.AddDays(30) 
+                                    : DateTimeOffset.UtcNow.AddHours(3)
+                            };
+                            
+                            Response.Cookies.Append("ApiToken", loginResponse.Token, cookieOptions);
 
-                        if (isCustomer)
-                        {
+                            // Determine redirect based on user roles
+                            var roles = loginResponse.User.Roles ?? new List<string>();
+                            var isCustomer = roles.Contains("Customer");
+                            var isHotel = roles.Contains("Admin") || roles.Contains("Staff") || roles.Contains("Veterinarian");
+
+                            if (isCustomer)
+                            {
+                                return RedirectToPage("/Start");
+                            }
+
+                            if (isHotel && !string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+                            {
+                                return LocalRedirect(ReturnUrl);
+                            }
+
                             return RedirectToPage("/Start");
                         }
-
-                        if (isHotel && !string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl))
+                        else
                         {
-                            return LocalRedirect(ReturnUrl);
+                            Error = "Không thể tìm thấy thông tin người dùng.";
                         }
-
-                        return RedirectToPage("/Start");
                     }
                 }
                 else
