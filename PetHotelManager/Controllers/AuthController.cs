@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace PetHotelManager.Controllers
 {
     using System.IdentityModel.Tokens.Jwt;
+    using System.Linq;
     using System.Security.Claims;
     using System.Text;
     using AutoMapper;
@@ -72,6 +73,46 @@ namespace PetHotelManager.Controllers
             }
 
             return Unauthorized(new { message = "Tài khoản hoặc mật khẩu không chính xác." });
+        }
+
+        // Public endpoint for customer registration
+        [HttpPost("register")]
+        public async Task<IActionResult> Register([FromBody] RegisterDto registerDto)
+        {
+            // Check if username already exists
+            var userExists = await _userManager.FindByNameAsync(registerDto.Username);
+            if (userExists != null)
+                return BadRequest(new { Status = "Error", Message = "Tên đăng nhập đã tồn tại!" });
+
+            // Check if email already exists
+            var emailExists = await _userManager.FindByEmailAsync(registerDto.Email);
+            if (emailExists != null)
+                return BadRequest(new { Status = "Error", Message = "Email đã được sử dụng!" });
+
+            ApplicationUser user = new()
+            {
+                Email = registerDto.Email,
+                SecurityStamp = Guid.NewGuid().ToString(),
+                UserName = registerDto.Username,
+                FullName = registerDto.FullName,
+                EmailConfirmed = true // Auto-confirm email for simplicity
+            };
+
+            var result = await _userManager.CreateAsync(user, registerDto.Password);
+            if (!result.Succeeded)
+            {
+                var errors = string.Join(", ", result.Errors.Select(e => e.Description));
+                return BadRequest(new { Status = "Error", Message = "Tạo tài khoản thất bại! " + errors });
+            }
+
+            // Ensure Customer role exists
+            if (!await _roleManager.RoleExistsAsync("Customer"))
+                await _roleManager.CreateAsync(new IdentityRole("Customer"));
+
+            // Assign Customer role
+            await _userManager.AddToRoleAsync(user, "Customer");
+
+            return Ok(new { Status = "Success", Message = "Đăng ký tài khoản thành công!" });
         }
 
         // This endpoint is used by Admin only to create Staff accounts.
