@@ -11,16 +11,16 @@
     <div class="alert alert-danger">@Model.Error</div>
 }
 
-<form method="post" class="row g-3">
+<form method="post" enctype="multipart/form-data" class="row g-3">
     <input type="hidden" asp-for="Form.Id" />
     <div class="col-md-4">
         <label class="form-label">Tên</label>
-        <input asp-for="Form.Name" class="form-control" />
+        <input asp-for="Form.Name" class="form-control" required />
         <span class="text-danger" asp-validation-for="Form.Name"></span>
     </div>
     <div class="col-md-4">
         <label class="form-label">Loài</label>
-        <input asp-for="Form.Species" class="form-control" />
+        <input asp-for="Form.Species" class="form-control" required />
         <span class="text-danger" asp-validation-for="Form.Species"></span>
     </div>
     <div class="col-md-4">
@@ -28,10 +28,31 @@
         <input asp-for="Form.Breed" class="form-control" />
         <span class="text-danger" asp-validation-for="Form.Breed"></span>
     </div>
-    <div class="col-md-8">
+
+    <div class="col-md-3">
+        <label class="form-label">Màu sắc</label>
+        <input asp-for="Form.Color" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Color"></span>
+    </div>
+    <div class="col-md-3">
+        <label class="form-label">Tuổi</label>
+        <input asp-for="Form.Age" type="number" min="0" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Age"></span>
+    </div>
+    <div class="col-md-6">
         <label class="form-label">Tình trạng sức khỏe</label>
         <input asp-for="Form.HealthStatus" class="form-control" />
         <span class="text-danger" asp-validation-for="Form.HealthStatus"></span>
+    </div>
+
+    <div class="col-md-4">
+        <label class="form-label">Ảnh hiện tại</label><br />
+        <img src="@(Model.ExistingImageUrl ?? "/images/placeholder.png")" alt="Ảnh thú cưng" class="img-thumbnail" style="max-height:150px;object-fit:cover;">
+    </div>
+    <div class="col-md-8">
+        <label class="form-label">Chọn ảnh mới (để thay)</label>
+        <input asp-for="Form.ImageFile" type="file" accept=".jpg,.jpeg,.png,.webp" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.ImageFile"></span>
     </div>
 
     <div class="col-12">

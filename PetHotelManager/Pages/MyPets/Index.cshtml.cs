@@ -17,9 +17,9 @@ namespace PetHotelManager.Pages.MyPets
             _context = context;
         }
 
-        public List<PetRow> Items { get; set; } = new();
-        public string? Error { get; set; }
-        public string? Success { get; set; }
+        public List<PetRow> Items   { get; set; } = new();
+        public string?      Error   { get; set; }
+        public string?      Success { get; set; }
 
         public async Task<IActionResult> OnGetAsync()
         {
@@ -33,10 +33,10 @@ namespace PetHotelManager.Pages.MyPets
                     .OrderBy(p => p.Name)
                     .Select(p => new PetRow
                     {
-                        Id = p.Id,
-                        Name = p.Name,
-                        Species = p.Species,
-                        Breed = p.Breed,
+                        Id           = p.Id,
+                        Name         = p.Name,
+                        Species      = p.Species,
+                        Breed        = p.Breed,
                         HealthStatus = p.HealthStatus
                     })
                     .ToListAsync();
@@ -75,12 +75,13 @@ namespace PetHotelManager.Pages.MyPets
 
         public class PetRow
         {
-            public int Id { get; set; }
-            public string Name { get; set; } = "";
-            public string Species { get; set; } = "";
-            public string? Breed { get; set; }
-            public DateTime? BirthDate { get; set; }
+            public int     Id           { get; set; }
+            public string  Name         { get; set; } = "";
+            public string  Species      { get; set; } = "";
+            public string? Breed        { get; set; }
+            public int?    Age    { get; set; }
             public string? HealthStatus { get; set; }
+            public string? ImageUrl     { get; set; }
         }
     }
 }

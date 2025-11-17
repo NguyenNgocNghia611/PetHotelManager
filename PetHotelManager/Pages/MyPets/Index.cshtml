@@ -24,12 +24,13 @@
     <table class="table table-sm align-middle">
         <thead>
             <tr>
+                <th>Ảnh</th>
                 <th>#</th>
                 <th>Tên</th>
                 <th>Loài</th>
                 <th>Giống</th>
-                <th>Ngày sinh</th>
-                <th>Tình trạng sức khỏe</th>
+                <th>Tuổi</th>
+                <th>Tình trạng</th>
                 <th style="width:160px"></th>
             </tr>
         </thead>
@@ -39,11 +40,16 @@
             foreach (var p in Model.Items)
             {
                 <tr>
+                    <td>
+                        <img src="@(p.ImageUrl ?? "/images/placeholder.png")"
+                             style="width:50px;height:50px;object-fit:cover;border-radius:6px;"
+                             alt="pet"/>
+                    </td>
                     <td>@p.Id</td>
                     <td>@p.Name</td>
                     <td>@p.Species</td>
                     <td>@p.Breed</td>
-                    <td>@(p.BirthDate?.ToString("dd/MM/yyyy"))</td>
+                    <td>@p.Age</td>
                     <td>@p.HealthStatus</td>
                     <td class="d-flex gap-1">
                         <a class="btn btn-sm btn-outline-secondary" href="/MyPets/Edit?id=@p.Id">Sửa</a>
@@ -57,7 +63,7 @@
         }
         else
         {
-            <tr><td colspan="7" class="text-center text-muted">Chưa có thú cưng nào</td></tr>
+            <tr><td colspan="8" class="text-center text-muted">Chưa có thú cưng nào</td></tr>
         }
         </tbody>
     </table>
