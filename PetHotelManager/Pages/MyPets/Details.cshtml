@@ -1,0 +1,102 @@
+@page
+@model PetHotelManager.Pages.MyPets.DetailsModel
+@{
+    ViewData["Title"] = "Bệnh sử thú cưng";
+}
+
+<h2 class="mb-3">Bệnh sử thú cưng</h2>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">Thông tin thú cưng</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3 text-center">
+                <img src="@Url.Content(Model.Pet.ImageUrl ?? "/images/placeholder.png")" 
+                     class="img-fluid rounded" 
+                     style="max-width: 200px; max-height: 200px; object-fit: cover;" 
+                     alt="@Model.Pet.Name" />
+            </div>
+            <div class="col-md-9">
+                <table class="table table-borderless">
+                    <tbody>
+                        <tr>
+                            <th style="width: 150px;">Tên:</th>
+                            <td>@Model.Pet.Name</td>
+                        </tr>
+                        <tr>
+                            <th>Loài:</th>
+                            <td>@Model.Pet.Species</td>
+                        </tr>
+                        <tr>
+                            <th>Giống:</th>
+                            <td>@(Model.Pet.Breed ?? "N/A")</td>
+                        </tr>
+                        <tr>
+                            <th>Tuổi:</th>
+                            <td>@Model.Pet.Age</td>
+                        </tr>
+                        <tr>
+                            <th>Màu sắc:</th>
+                            <td>@(Model.Pet.Color ?? "N/A")</td>
+                        </tr>
+                        <tr>
+                            <th>Tình trạng sức khỏe:</th>
+                            <td>@(Model.Pet.HealthStatus ?? "N/A")</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Lịch sử khám bệnh</h5>
+    </div>
+    <div class="card-body">
+        @if (Model.MedicalRecords.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="table table-sm table-hover align-middle">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Ngày khám</th>
+                            <th>Triệu chứng</th>
+                            <th>Chẩn đoán</th>
+                            <th>Bác sĩ</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var record in Model.MedicalRecords)
+                        {
+                            <tr>
+                                <td>@record.Id</td>
+                                <td>@record.ExaminationDate.ToString("dd/MM/yyyy")</td>
+                                <td>@record.Symptoms</td>
+                                <td>@record.Diagnosis</td>
+                                <td>@record.VeterinarianName</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted text-center mb-0">Chưa có lịch sử khám bệnh</p>
+        }
+    </div>
+</div>
+
+<div class="mt-3">
+    <a href="/MyPets" class="btn btn-outline-secondary">Quay lại</a>
+</div>

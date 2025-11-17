@@ -1,0 +1,85 @@
+@page
+@model PetHotelManager.Pages.Customer.ProfileModel
+@{
+    ViewData["Title"] = "Hồ sơ";
+}
+
+<h2 class="mb-3">Hồ sơ của tôi</h2>
+
+@if (!string.IsNullOrEmpty(Model.SuccessMessage))
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        @Model.SuccessMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        @Model.ErrorMessage
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0">Thông tin cá nhân</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="UpdateProfile">
+                    <div class="mb-3">
+                        <label asp-for="ProfileInput.FullName" class="form-label"></label>
+                        <input asp-for="ProfileInput.FullName" class="form-control" />
+                        <span asp-validation-for="ProfileInput.FullName" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ProfileInput.Email" class="form-label"></label>
+                        <input asp-for="ProfileInput.Email" class="form-control" readonly />
+                        <small class="form-text text-muted">Email không thể thay đổi</small>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="ProfileInput.PhoneNumber" class="form-label"></label>
+                        <input asp-for="ProfileInput.PhoneNumber" class="form-control" />
+                        <span asp-validation-for="ProfileInput.PhoneNumber" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Cập nhật thông tin</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Đổi mật khẩu</h5>
+            </div>
+            <div class="card-body">
+                <form method="post" asp-page-handler="ChangePassword">
+                    <div class="mb-3">
+                        <label asp-for="PasswordInput.CurrentPassword" class="form-label"></label>
+                        <input asp-for="PasswordInput.CurrentPassword" class="form-control" />
+                        <span asp-validation-for="PasswordInput.CurrentPassword" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="PasswordInput.NewPassword" class="form-label"></label>
+                        <input asp-for="PasswordInput.NewPassword" class="form-control" />
+                        <span asp-validation-for="PasswordInput.NewPassword" class="text-danger"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label asp-for="PasswordInput.ConfirmPassword" class="form-label"></label>
+                        <input asp-for="PasswordInput.ConfirmPassword" class="form-control" />
+                        <span asp-validation-for="PasswordInput.ConfirmPassword" class="text-danger"></span>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Đổi mật khẩu</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

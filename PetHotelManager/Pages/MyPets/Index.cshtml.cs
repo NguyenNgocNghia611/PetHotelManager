@@ -37,7 +37,9 @@ namespace PetHotelManager.Pages.MyPets
                         Name         = p.Name,
                         Species      = p.Species,
                         Breed        = p.Breed,
-                        HealthStatus = p.HealthStatus
+                        Age          = p.Age,
+                        HealthStatus = p.HealthStatus,
+                        ImageUrl     = p.ImageUrl
                     })
                     .ToListAsync();
             }
