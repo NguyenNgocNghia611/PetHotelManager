@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace PetHotelManager.Pages.Appointments
 {
-    [Authorize(Roles = "Admin,Staff,Doctor")]
+    [Authorize(Roles = "Admin,Staff,Doctor,Veterinarian")]
     public class DetailsModel : PageModel
     {
         private readonly IHttpClientFactory _clientFactory;

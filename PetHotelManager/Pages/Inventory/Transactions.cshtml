@@ -1,0 +1,182 @@
+@page "/inventory/transactions"
+@model PetHotelManager.Pages.Inventory.TransactionsModel
+@{
+    ViewData["Title"] = "Lịch sử giao dịch kho";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>🕒 @ViewData["Title"]</h1>
+    <a asp-page="/Inventory/Stock" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Quay lại
+    </a>
+</div>
+<hr />
+
+<!-- Filters -->
+<form method="get" class="card mb-3">
+    <div class="card-header">
+        <h5 class="mb-0">Bộ lọc</h5>
+    </div>
+    <div class="card-body">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label for="transactionType" class="form-label">Loại giao dịch</label>
+                <select class="form-select" id="transactionType" name="transactionType">
+                    <option value="">-- Tất cả --</option>
+                    <option value="Receipt" selected="@(Model.TransactionType == "Receipt")">Nhập kho</option>
+                    <option value="Issue" selected="@(Model.TransactionType == "Issue")">Xuất kho thủ công</option>
+                    <option value="Sale" selected="@(Model.TransactionType == "Sale")">Bán hàng</option>
+                    <option value="MedicalPrescription" selected="@(Model.TransactionType == "MedicalPrescription")">Kê đơn thuốc</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="startDate" class="form-label">Từ ngày</label>
+                <input type="date" class="form-control" id="startDate" name="startDate" value="@Model.StartDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-3">
+                <label for="endDate" class="form-label">Đến ngày</label>
+                <input type="date" class="form-control" id="endDate" name="endDate" value="@Model.EndDate?.ToString("yyyy-MM-dd")" />
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="bi bi-search"></i> Lọc
+                </button>
+                <a asp-page="/Inventory/Transactions" class="btn btn-secondary">
+                    <i class="bi bi-x-circle"></i> Xóa
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+
+<!-- Summary -->
+<div class="alert alert-info">
+    <strong>Tổng số giao dịch:</strong> @Model.TransactionData.TotalRecords
+</div>
+
+<!-- Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Chi tiết giao dịch</h5>
+    </div>
+    <div class="card-body">
+        @if (Model.TransactionData.Transactions.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Ngày giờ</th>
+                            <th>Loại</th>
+                            <th>Sản phẩm</th>
+                            <th class="text-end">Số lượng</th>
+                            <th>Người thực hiện</th>
+                            <th>Ghi chú</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var tx in Model.TransactionData.Transactions)
+                        {
+                            var changeClass = tx.ChangeQuantity > 0 ? "text-success" : "text-danger";
+                            var changeIcon = tx.ChangeQuantity > 0 ? "↑" : "↓";
+                            var typeText = tx.TransactionType switch
+                            {
+                                "Receipt" => "Nhập kho",
+                                "Issue" => "Xuất kho",
+                                "Sale" => "Bán hàng",
+                                "MedicalPrescription" => "Kê đơn",
+                                _ => tx.TransactionType
+                            };
+                            var badgeClass = tx.TransactionType switch
+                            {
+                                "Receipt" => "badge bg-success",
+                                "Issue" => "badge bg-warning text-dark",
+                                "Sale" => "badge bg-primary",
+                                "MedicalPrescription" => "badge bg-info text-dark",
+                                _ => "badge bg-secondary"
+                            };
+
+                            <tr>
+                                <td>@tx.TransactionDate.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <span class="@badgeClass">@typeText</span>
+                                </td>
+                                <td>@tx.ProductName</td>
+                                <td class="text-end @changeClass">
+                                    <strong>@changeIcon @Math.Abs(tx.ChangeQuantity)</strong>
+                                </td>
+                                <td>@(tx.CreatedByUserName ?? "-")</td>
+                                <td>
+                                    <small>
+                                        @if (!string.IsNullOrEmpty(tx.Supplier))
+                                        {
+                                            <span class="text-muted">NCC: @tx.Supplier</span><br />
+                                        }
+                                        @if (tx.ReferenceType != null && tx.ReferenceId.HasValue)
+                                        {
+                                            <span class="text-muted">Ref: @tx.ReferenceType #@tx.ReferenceId</span><br />
+                                        }
+                                        @(tx.Notes ?? "")
+                                    </small>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            @if (Model.TransactionData.TotalPages > 1)
+            {
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center mt-3">
+                        @if (Model.PageNumber > 1)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" asp-page="/Inventory/Transactions" 
+                                   asp-route-pageNumber="@(Model.PageNumber - 1)" 
+                                   asp-route-transactionType="@Model.TransactionType"
+                                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                                   asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")">
+                                    &laquo; Trước
+                                </a>
+                            </li>
+                        }
+                        
+                        @for (int i = Math.Max(1, Model.PageNumber - 2); i <= Math.Min(Model.TransactionData.TotalPages, Model.PageNumber + 2); i++)
+                        {
+                            <li class="page-item @(i == Model.PageNumber ? "active" : "")">
+                                <a class="page-link" asp-page="/Inventory/Transactions" 
+                                   asp-route-pageNumber="@i"
+                                   asp-route-transactionType="@Model.TransactionType"
+                                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                                   asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")">
+                                    @i
+                                </a>
+                            </li>
+                        }
+                        
+                        @if (Model.PageNumber < Model.TransactionData.TotalPages)
+                        {
+                            <li class="page-item">
+                                <a class="page-link" asp-page="/Inventory/Transactions" 
+                                   asp-route-pageNumber="@(Model.PageNumber + 1)"
+                                   asp-route-transactionType="@Model.TransactionType"
+                                   asp-route-startDate="@Model.StartDate?.ToString("yyyy-MM-dd")"
+                                   asp-route-endDate="@Model.EndDate?.ToString("yyyy-MM-dd")">
+                                    Sau &raquo;
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            }
+        }
+        else
+        {
+            <div class="alert alert-info">
+                Không có giao dịch nào phù hợp với điều kiện lọc.
+            </div>
+        }
+    </div>
+</div>

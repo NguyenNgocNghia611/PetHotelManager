@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace PetHotelManager.Pages.Pets
 {
-    [Authorize(Roles = "Admin,Staff,Doctor")]
+    [Authorize(Roles = "Admin,Staff,Doctor,Veterinarian")]
     public class EditModel : PageModel
     {
         private readonly IHttpClientFactory _clientFactory;

@@ -1,0 +1,150 @@
+@page "/inventory/stock"
+@model PetHotelManager.Pages.Inventory.StockModel
+@{
+    ViewData["Title"] = "Báo cáo tồn kho";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>📊 @ViewData["Title"]</h1>
+    <div>
+        <a asp-page="/Inventory/Receive" class="btn btn-success">
+            <i class="bi bi-box-arrow-in-down"></i> Nhập kho
+        </a>
+        <a asp-page="/Inventory/Issue" class="btn btn-warning">
+            <i class="bi bi-box-arrow-up"></i> Xuất kho
+        </a>
+    </div>
+</div>
+<hr />
+
+<!-- Thống kê tổng quan -->
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h5 class="card-title">Tổng sản phẩm</h5>
+                <h2 class="mb-0">@Model.StockReport.TotalProducts</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h5 class="card-title">Tổng giá trị</h5>
+                <h2 class="mb-0">@Model.StockReport.TotalValue.ToString("N0") đ</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h5 class="card-title">Cần chú ý</h5>
+                <h2 class="mb-0">@Model.StockReport.LowStockCount</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<form method="get" class="row g-3 mb-3">
+    <div class="col-md-5">
+        <label for="search" class="form-label">Tìm kiếm sản phẩm</label>
+        <input type="text" class="form-control" id="search" name="search" placeholder="Tên sản phẩm..." value="@Model.Search" />
+    </div>
+    <div class="col-md-4">
+        <label for="category" class="form-label">Danh mục</label>
+        <input type="text" class="form-control" id="category" name="category" placeholder="Danh mục..." value="@Model.Category" />
+    </div>
+    <div class="col-md-3 d-flex align-items-end">
+        <button type="submit" class="btn btn-primary me-2">
+            <i class="bi bi-search"></i> Lọc
+        </button>
+        <a asp-page="/Inventory/Stock" class="btn btn-secondary">
+            <i class="bi bi-x-circle"></i> Xóa
+        </a>
+    </div>
+</form>
+
+<!-- Table -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Chi tiết tồn kho</h5>
+    </div>
+    <div class="card-body">
+        @if (Model.StockReport.Products.Count > 0)
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Sản phẩm</th>
+                            <th>Danh mục</th>
+                            <th class="text-end">Tồn kho</th>
+                            <th class="text-end">Tồn tối thiểu</th>
+                            <th class="text-end">Mức đặt lại</th>
+                            <th>Đơn vị</th>
+                            <th class="text-end">Giá</th>
+                            <th class="text-end">Tổng giá trị</th>
+                            <th class="text-center">Trạng thái</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model.StockReport.Products)
+                        {
+                            var rowClass = item.StockStatus switch
+                            {
+                                "OutOfStock" => "table-danger",
+                                "Critical" => "table-warning",
+                                "Warning" => "table-info",
+                                _ => ""
+                            };
+                            <tr class="@rowClass">
+                                <td>@item.ProductName</td>
+                                <td>@(item.Category ?? "-")</td>
+                                <td class="text-end">
+                                    <strong>@item.CurrentStock</strong>
+                                </td>
+                                <td class="text-end">@item.MinimumStock</td>
+                                <td class="text-end">@item.ReorderLevel</td>
+                                <td>@item.Unit</td>
+                                <td class="text-end">@item.Price.ToString("N0") đ</td>
+                                <td class="text-end">@item.TotalValue.ToString("N0") đ</td>
+                                <td class="text-center">
+                                    @{
+                                        var badgeClass = item.StockStatus switch
+                                        {
+                                            "OutOfStock" => "badge bg-danger",
+                                            "Critical" => "badge bg-warning text-dark",
+                                            "Warning" => "badge bg-info text-dark",
+                                            _ => "badge bg-success"
+                                        };
+                                        var badgeText = item.StockStatus switch
+                                        {
+                                            "OutOfStock" => "Hết hàng",
+                                            "Critical" => "Cực thấp",
+                                            "Warning" => "Thấp",
+                                            _ => "Bình thường"
+                                        };
+                                    }
+                                    <span class="@badgeClass">@badgeText</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                Không tìm thấy sản phẩm nào phù hợp với điều kiện lọc.
+            </div>
+        }
+    </div>
+</div>
+
+<div class="mt-3">
+    <a asp-page="/Inventory/Transactions" class="btn btn-outline-primary">
+        <i class="bi bi-clock-history"></i> Xem lịch sử giao dịch
+    </a>
+</div>
