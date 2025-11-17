@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -34,6 +35,7 @@ namespace PetHotelManager.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login([FromBody] LoginDto loginDto)
         {
             var user = await _userManager.FindByNameAsync(loginDto.Username);
@@ -77,6 +79,7 @@ namespace PetHotelManager.Controllers
         // This endpoint is used by Admin only to create Staff accounts.
         //It should be protected with role-based authorization and inside AdminController.
         [HttpPost("register-staff")]
+        [AllowAnonymous]
         public async Task<IActionResult> RegisterStaff([FromBody] RegisterDto registerDto)
         {
             var userExists = await _userManager.FindByNameAsync(registerDto.Username);
