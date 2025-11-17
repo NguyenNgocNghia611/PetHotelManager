@@ -62,11 +62,18 @@
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Nghiệp vụ (Staff)</a>
                             <ul class="dropdown-menu">
                                 <li><a class="dropdown-item" href="/Appointments">Lịch hẹn</a></li>
-                                <li><a class="dropdown-item" href="/Rooms">Tình trạng phòng</a></li>
-                                <li><a class="dropdown-item" href="/Appointments/Filter">Lọc lịch hẹn</a></li>
-                                <li><a class="dropdown-item" href="/MedicalRecords/Create">Tạo hồ sơ khám</a></li>
+                                <li><a class="dropdown-item" href="/Rooms/Status">Tình trạng phòng</a></li>
+                                <li><a class="dropdown-item" href="/Pets">Quản lý thú cưng</a></li>
+                                <li><a class="dropdown-item" href="/MedicalRecords">Hồ sơ y tế</a></li>
                                 <li><a class="dropdown-item" href="/Invoices">Hóa đơn</a></li>
-                                <li><a class="dropdown-item" asp-page="/Inventory/Receive">Kho (giao dịch tồn)</a></li>
+                                <li>
+                                    <hr class="dropdown-divider"/>
+                                </li>
+                                <li><h6 class="dropdown-header">Kho</h6></li>
+                                <li><a class="dropdown-item" asp-page="/Inventory/Receive">Nhập kho</a></li>
+                                <li><a class="dropdown-item" asp-page="/Inventory/Issue">Xuất kho</a></li>
+                                <li><a class="dropdown-item" asp-page="/Inventory/Stock">Tồn kho</a></li>
+                                <li><a class="dropdown-item" asp-page="/Inventory/Transactions">Lịch sử giao dịch</a></li>
                             </ul>
                         </li>
                     }
