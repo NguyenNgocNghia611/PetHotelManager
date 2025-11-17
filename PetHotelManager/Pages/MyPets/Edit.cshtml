@@ -1,0 +1,41 @@
+@page
+@model PetHotelManager.Pages.MyPets.EditModel
+@{
+    ViewData["Title"] = "Sửa thú cưng";
+}
+
+<h2 class="mb-3">Sửa thú cưng #@Model.Form.Id</h2>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+
+<form method="post" class="row g-3">
+    <input type="hidden" asp-for="Form.Id" />
+    <div class="col-md-4">
+        <label class="form-label">Tên</label>
+        <input asp-for="Form.Name" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Name"></span>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Loài</label>
+        <input asp-for="Form.Species" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Species"></span>
+    </div>
+    <div class="col-md-4">
+        <label class="form-label">Giống</label>
+        <input asp-for="Form.Breed" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.Breed"></span>
+    </div>
+    <div class="col-md-8">
+        <label class="form-label">Tình trạng sức khỏe</label>
+        <input asp-for="Form.HealthStatus" class="form-control" />
+        <span class="text-danger" asp-validation-for="Form.HealthStatus"></span>
+    </div>
+
+    <div class="col-12">
+        <button class="btn btn-primary">Lưu</button>
+        <a href="/MyPets" class="btn btn-outline-secondary">Hủy</a>
+    </div>
+</form>

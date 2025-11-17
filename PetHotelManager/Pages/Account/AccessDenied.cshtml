@@ -1,19 +1,17 @@
 @page
-@model PetHotelManager.Pages.Account.AccessDenied
-
+@model PetHotelManager.Pages.Account.AccessDeniedModel
 @{
-    Layout = null;
+    ViewData["Title"] = "Truy cập bị từ chối";
 }
-
-<!DOCTYPE html>
-
-<html>
-<head>
-    <title></title>
-</head>
-<body>
-<div>
-    
+<div class="container py-4">
+    <div class="alert alert-warning">
+        <strong>Truy cập bị từ chối.</strong> Bạn không có quyền truy cập trang này.
+    </div>
+    <div class="d-flex gap-2">
+        <a href="/Start" class="btn btn-primary">Về trang phù hợp</a>
+        @if (!string.IsNullOrEmpty(Model.ReturnUrl))
+        {
+            <a href="@Model.ReturnUrl" class="btn btn-outline-secondary">Thử lại</a>
+        }
+    </div>
 </div>
-</body>
-</html>

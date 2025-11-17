@@ -1,49 +1,75 @@
+using System.ComponentModel.DataAnnotations;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using PetHotelManager.DTOs.RoomTypes;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 
 namespace PetHotelManager.Pages.RoomTypes
 {
     [Authorize(Roles = "Admin")]
     public class CreateModel : PageModel
     {
-        private readonly IHttpClientFactory _clientFactory;
+        private readonly IHttpClientFactory _http;
 
-        public CreateModel(IHttpClientFactory clientFactory)
+        public CreateModel(IHttpClientFactory httpClientFactory)
         {
-            _clientFactory = clientFactory;
+            _http = httpClientFactory;
         }
 
-        [BindProperty]
-        public CreateRoomTypeDto Input { get; set; }
+        [BindProperty] public CreateRoomTypeForm Form { get; set; } = new();
+
+        public string? Error { get; set; }
 
         public void OnGet() { }
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid) return Page();
+            if (!ModelState.IsValid)
+                return Page();
 
-            var client = _clientFactory.CreateClient("ApiClient");
-            var token  = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
-            if (token != null)
+            try
             {
-                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var client  = _http.CreateClient();
+
+                var cookieHeader = Request.Headers.Cookie.ToString();
+                if (!string.IsNullOrEmpty(cookieHeader))
+                    client.DefaultRequestHeaders.Add("Cookie", cookieHeader);
+
+                var dto = new
+                {
+                    TypeName    = Form.TypeName,
+                    PricePerDay = Form.PricePerDay,
+                    Description = Form.Description
+                };
+
+                var res = await client.PostAsJsonAsync($"{baseUrl}/api/RoomTypes", dto);
+                if (res.IsSuccessStatusCode)
+                {
+                    return RedirectToPage("/RoomTypes/Index");
+                }
+                else
+                {
+                    Error = $"API /api/RoomTypes trả về {(int)res.StatusCode}: {await res.Content.ReadAsStringAsync()}";
+                }
             }
-
-            var baseUrl  = $"{Request.Scheme}://{Request.Host}";
-            var response = await client.PostAsJsonAsync($"{baseUrl}/api/roomtypes", Input);
-
-            if (response.IsSuccessStatusCode)
+            catch (Exception ex)
             {
-                return RedirectToPage("./Index");
+                Error = ex.Message;
             }
-
-            ModelState.AddModelError(string.Empty, "Lỗi khi tạo loại phòng từ API.");
             return Page();
+        }
+
+        public class CreateRoomTypeForm
+        {
+            [Required, StringLength(100)]
+            public string TypeName { get; set; } = "";
+
+            [Range(0, 100000000)]
+            public decimal PricePerDay { get; set; }
+
+            [StringLength(500)]
+            public string? Description { get; set; }
         }
     }
 }

@@ -10,26 +10,42 @@
 {
     <div class="alert alert-danger">@Model.Error</div>
 }
-
 @if (!string.IsNullOrEmpty(Model.Success))
 {
     <div class="alert alert-success">@Model.Success</div>
 }
 
 <form method="post" class="row g-3">
-    @if (Model.IsStaff) {
+    @if (Model.IsStaff)
+    {
         <div class="col-md-4">
             <label class="form-label">UserId (khách hàng)</label>
             <input asp-for="Form.UserId" class="form-control" placeholder="Nhập UserId khách hàng" />
         </div>
+        <div class="col-md-4">
+            <label class="form-label">PetId</label>
+            <input asp-for="Form.PetId" type="number" class="form-control" placeholder="Nhập PetId" />
+            <span class="text-danger" asp-validation-for="Form.PetId"></span>
+        </div>
+    }
+    else if (Model.IsCustomer)
+    {
+        <div class="col-md-6">
+            <label class="form-label">Thú cưng của tôi</label>
+            <select asp-for="Form.PetId" asp-items="Model.MyPetsSelect" class="form-select">
+                <option value="">-- chọn thú cưng --</option>
+            </select>
+            <span class="text-danger" asp-validation-for="Form.PetId"></span>
+            @if (Model.MyPetsSelect.Count == 0)
+            {
+                <div class="form-text">
+                    Bạn chưa có thú cưng. Hãy tạo tại <a href="/MyPets/Create">đây</a>, sau đó quay lại đặt lịch.
+                </div>
+            }
+        </div>
     }
 
-    <div class="col-md-4">
-        <label class="form-label">PetId</label>
-        <input asp-for="Form.PetId" type="number" class="form-control" placeholder="Nhập PetId" />
-    </div>
-
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label class="form-label">Dịch vụ</label>
         <select asp-for="Form.ServiceId" class="form-select">
             <option value="">-- chọn --</option>
@@ -38,9 +54,10 @@
                 <option value="@s.Id">@s.Name (@s.Price.ToString("n0"))</option>
             }
         </select>
+        <span class="text-danger" asp-validation-for="Form.ServiceId"></span>
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label class="form-label">Phòng</label>
         <select asp-for="Form.RoomId" class="form-select">
             <option value="">-- chọn --</option>
@@ -49,14 +66,15 @@
                 <option value="@r.Id">@r.RoomNumber - @r.RoomTypeName (@r.PricePerDay.ToString("n0")/ngày)</option>
             }
         </select>
+        <span class="text-danger" asp-validation-for="Form.RoomId"></span>
     </div>
 
-    <div class="col-md-4">
-        <label class="form-label">Ngày hẹn (nhận phòng)</label>
+    <div class="col-md-6">
+        <label class="form-label">Ngày nhận phòng</label>
         <input asp-for="Form.AppointmentDate" type="datetime-local" class="form-control" />
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-6">
         <label class="form-label">Ngày trả phòng (Check-out)</label>
         <input asp-for="Form.CheckOutDate" type="datetime-local" class="form-control" />
     </div>

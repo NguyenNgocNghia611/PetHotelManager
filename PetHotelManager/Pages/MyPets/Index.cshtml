@@ -1,0 +1,64 @@
+@page
+@model PetHotelManager.Pages.MyPets.IndexModel
+@{
+    ViewData["Title"] = "Thú cưng của tôi";
+}
+
+<h2 class="mb-3">Thú cưng của tôi</h2>
+
+<div class="d-flex justify-content-between mb-3">
+    <div></div>
+    <a class="btn btn-sm btn-primary" href="/MyPets/Create">+ Thêm thú cưng</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+@if (!string.IsNullOrEmpty(Model.Success))
+{
+    <div class="alert alert-success">@Model.Success</div>
+}
+
+<div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Tên</th>
+                <th>Loài</th>
+                <th>Giống</th>
+                <th>Ngày sinh</th>
+                <th>Tình trạng sức khỏe</th>
+                <th style="width:160px"></th>
+            </tr>
+        </thead>
+        <tbody>
+        @if (Model.Items.Count > 0)
+        {
+            foreach (var p in Model.Items)
+            {
+                <tr>
+                    <td>@p.Id</td>
+                    <td>@p.Name</td>
+                    <td>@p.Species</td>
+                    <td>@p.Breed</td>
+                    <td>@(p.BirthDate?.ToString("dd/MM/yyyy"))</td>
+                    <td>@p.HealthStatus</td>
+                    <td class="d-flex gap-1">
+                        <a class="btn btn-sm btn-outline-secondary" href="/MyPets/Edit?id=@p.Id">Sửa</a>
+                        <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Xác nhận xóa thú cưng này?');">
+                            <input type="hidden" name="id" value="@p.Id" />
+                            <button class="btn btn-sm btn-outline-danger">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr><td colspan="7" class="text-center text-muted">Chưa có thú cưng nào</td></tr>
+        }
+        </tbody>
+    </table>
+</div>

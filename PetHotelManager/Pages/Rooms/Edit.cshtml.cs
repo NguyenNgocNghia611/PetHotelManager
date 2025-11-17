@@ -1,69 +1,69 @@
+using System.ComponentModel.DataAnnotations;
+using System.Net.Http.Json;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using PetHotelManager.DTOs.Rooms;
-using PetHotelManager.DTOs.RoomTypes;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Net.Http.Json;
-using System.Threading.Tasks;
 
 namespace PetHotelManager.Pages.Rooms
 {
     [Authorize(Roles = "Admin")]
     public class EditModel : PageModel
     {
-        private readonly IHttpClientFactory _clientFactory;
+        private readonly IHttpClientFactory _http;
+        public EditModel(IHttpClientFactory httpClientFactory) => _http = httpClientFactory;
 
-        public EditModel(IHttpClientFactory clientFactory)
+        [BindProperty(SupportsGet = true)]
+        public int Id { get; set; }
+
+        [BindProperty] public EditRoomForm Form { get; set; } = new();
+        public List<RoomTypeItem> RoomTypes { get; set; } = new();
+
+        public string? Error { get; set; }
+
+        public async Task<IActionResult> OnGetAsync()
         {
-            _clientFactory = clientFactory;
-        }
-
-        [BindProperty]
-        public UpdateRoomDto Input { get; set; }
-
-        public SelectList RoomTypes { get; set; }
-
-        private HttpClient GetAuthenticatedClient()
-        {
-            var client = _clientFactory.CreateClient("ApiClient");
-            var token = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
-            if (token != null)
+            try
             {
-                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var client  = _http.CreateClient();
+
+                // forward cookie (dù GET thường public)
+                var cookieHeader = Request.Headers.Cookie.ToString();
+                if (!string.IsNullOrEmpty(cookieHeader))
+                    client.DefaultRequestHeaders.Add("Cookie", cookieHeader);
+
+                // Load detail
+                var res = await client.GetAsync($"{baseUrl}/api/Rooms/{Id}");
+                if (!res.IsSuccessStatusCode)
+                {
+                    Error = $"Không tải được phòng. {(int)res.StatusCode} - {await res.Content.ReadAsStringAsync()}";
+                    return Page();
+                }
+                var dto = await res.Content.ReadFromJsonAsync<RoomDetail>();
+                if (dto == null)
+                {
+                    Error = "Không tìm thấy phòng.";
+                    return Page();
+                }
+
+                // Load room types
+                RoomTypes = await client.GetFromJsonAsync<List<RoomTypeItem>>($"{baseUrl}/api/RoomTypes") ?? new();
+
+                // Map RoomTypeId từ tên (nếu API không trả RoomTypeId)
+                var currentTypeId = RoomTypes.FirstOrDefault(t => t.TypeName == dto.RoomTypeName)?.Id ?? 0;
+
+                Form = new EditRoomForm
+                {
+                    Id         = dto.Id,
+                    RoomNumber = dto.RoomNumber,
+                    RoomTypeId = currentTypeId,
+                    Status     = dto.Status
+                };
             }
-            return client;
-        }
-
-        public async Task<IActionResult> OnGetAsync(int id)
-        {
-            var client = GetAuthenticatedClient();
-            var baseUrl = $"{Request.Scheme}://{Request.Host}";
-
-            var roomTask = client.GetFromJsonAsync<RoomDto>($"{baseUrl}/api/rooms/{id}");
-            var roomTypesTask = client.GetFromJsonAsync<List<RoomTypeDto>>($"{baseUrl}/api/roomtypes");
-
-            await Task.WhenAll(roomTask, roomTypesTask);
-
-            var roomDto = await roomTask;
-            if (roomDto == null) return NotFound();
-
-            var roomTypes = (await roomTypesTask) ?? new List<RoomTypeDto>();
-            RoomTypes = new SelectList(roomTypes, "Id", "TypeName");
-
-            var selectedRoomType = roomTypes.FirstOrDefault(rt => rt.TypeName == roomDto.RoomTypeName);
-
-            Input = new UpdateRoomDto
+            catch (Exception ex)
             {
-                Id = roomDto.Id,
-                RoomNumber = roomDto.RoomNumber,
-                Status = roomDto.Status,
-                RoomTypeId = selectedRoomType?.Id ?? 0
-            };
-
+                Error = ex.Message;
+            }
             return Page();
         }
 
@@ -71,25 +71,81 @@ namespace PetHotelManager.Pages.Rooms
         {
             if (!ModelState.IsValid)
             {
-                var client = GetAuthenticatedClient();
-                var baseUrl = $"{Request.Scheme}://{Request.Host}";
-                var roomTypes = await client.GetFromJsonAsync<List<RoomTypeDto>>($"{baseUrl}/api/roomtypes") ?? new List<RoomTypeDto>();
-                RoomTypes = new SelectList(roomTypes, "Id", "TypeName");
+                await ReloadRoomTypesForPostAsync();
                 return Page();
             }
 
-            var apiClient = GetAuthenticatedClient();
-            var apiBaseUrl = $"{Request.Scheme}://{Request.Host}";
-            var response = await apiClient.PutAsJsonAsync($"{apiBaseUrl}/api/rooms/{Input.Id}", Input);
-
-            if (response.IsSuccessStatusCode)
+            try
             {
-                return RedirectToPage("./Index");
+                var baseUrl = $"{Request.Scheme}://{Request.Host}";
+                var client  = _http.CreateClient();
+
+                var cookieHeader = Request.Headers.Cookie.ToString();
+                if (!string.IsNullOrEmpty(cookieHeader))
+                    client.DefaultRequestHeaders.Add("Cookie", cookieHeader);
+
+                var dto = new
+                {
+                    Id         = Form.Id,
+                    RoomNumber = Form.RoomNumber,
+                    RoomTypeId = Form.RoomTypeId,
+                    Status     = Form.Status
+                };
+
+                var res = await client.PutAsJsonAsync($"{baseUrl}/api/Rooms/{Form.Id}", dto);
+                if (res.IsSuccessStatusCode)
+                {
+                    return RedirectToPage("/Rooms/Index");
+                }
+                else
+                {
+                    Error = $"Cập nhật thất bại: {(int)res.StatusCode} - {await res.Content.ReadAsStringAsync()}";
+                }
+            }
+            catch (Exception ex)
+            {
+                Error = ex.Message;
             }
 
-            ModelState.AddModelError(string.Empty, "Lỗi khi cập nhật phòng từ API.");
-            await OnGetAsync(Input.Id);
+            await ReloadRoomTypesForPostAsync();
             return Page();
+        }
+
+        private async Task ReloadRoomTypesForPostAsync()
+        {
+            var baseUrl = $"{Request.Scheme}://{Request.Host}";
+            var client  = _http.CreateClient();
+            RoomTypes   = await client.GetFromJsonAsync<List<RoomTypeItem>>($"{baseUrl}/api/RoomTypes") ?? new();
+        }
+
+        public class EditRoomForm
+        {
+            public int Id { get; set; }
+
+            [Required, StringLength(50)]
+            public string RoomNumber { get; set; } = "";
+
+            [Required]
+            public int RoomTypeId { get; set; }
+
+            [Required, StringLength(50)]
+            public string Status { get; set; } = "Available";
+        }
+
+        public class RoomDetail
+        {
+            public int Id { get; set; }
+            public string RoomNumber { get; set; } = "";
+            public string RoomTypeName { get; set; } = "";
+            public decimal PricePerDay { get; set; }
+            public string Status { get; set; } = "";
+        }
+
+        public class RoomTypeItem
+        {
+            public int Id { get; set; }
+            public string TypeName { get; set; } = "";
+            public decimal PricePerDay { get; set; }
         }
     }
 }

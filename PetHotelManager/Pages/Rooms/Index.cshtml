@@ -1,45 +1,82 @@
-@page "/rooms"
+@page
 @model PetHotelManager.Pages.Rooms.IndexModel
 @{
     ViewData["Title"] = "Quản lý Phòng";
 }
 
-<div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center">
-    <h1>@ViewData["Title"]</h1>
-    <div class="btn-toolbar mb-2 mb-md-0">
-        <a asp-page="Create" class="btn btn-sm btn-outline-primary">
-            <i class="bi bi-plus-circle-fill"></i>
-            Thêm mới Phòng
-        </a>
-    </div>
+<h2 class="mb-3">Quản lý Phòng</h2>
+
+<div class="d-flex justify-content-between mb-3">
+    <form method="get" class="d-flex gap-2">
+        <input name="Search" value="@Model.Search" class="form-control form-control-sm" placeholder="Tìm theo số phòng / loại / trạng thái" />
+        <button class="btn btn-sm btn-outline-primary">Lọc</button>
+    </form>
+    <a class="btn btn-sm btn-primary" href="/Rooms/Create">+ Thêm mới</a>
 </div>
 
+@if (!string.IsNullOrEmpty(Model.Error))
+{
+    <div class="alert alert-danger">@Model.Error</div>
+}
+@if (!string.IsNullOrEmpty(Model.Success))
+{
+    <div class="alert alert-success">@Model.Success</div>
+}
+
 <div class="table-responsive">
-    <table class="table table-striped table-sm">
+    <table class="table table-sm align-middle">
         <thead>
-        <tr>
-            <th scope="col">Số phòng</th>
-            <th scope="col">Loại phòng</th>
-            <th scope="col" class="text-end">Giá mỗi ngày</th>
-            <th scope="col">Trạng thái</th>
-            <th scope="col" class="text-end">Hành động</th>
-        </tr>
+            <tr>
+                <th>#</th>
+                <th>Số phòng</th>
+                <th>Loại</th>
+                <th>Giá/ngày</th>
+                <th>Trạng thái</th>
+                <th style="width:240px"></th>
+            </tr>
         </thead>
         <tbody>
-        @foreach (var room in Model.RoomList)
+        @if (Model.Items.Count > 0)
         {
-            <tr>
-                <td>@room.RoomNumber</td>
-                <td>@room.RoomTypeName</td>
-                <td class="text-end">@room.PricePerDay.ToString("N0")</td>
-                <td>@room.Status</td>
-                <td class="text-end">
-                    <form method="post" class="d-inline">
-                        <a asp-page="./Edit" asp-route-id="@room.Id" class="btn btn-sm btn-outline-secondary">Sửa</a>
-                        <button type="submit" asp-page-handler="Delete" asp-route-id="@room.Id" class="btn btn-sm btn-outline-danger" onclick="return confirm('Bạn có chắc chắn muốn xóa phòng này?')">Xóa</button>
-                    </form>
-                </td>
-            </tr>
+            foreach (var r in Model.Items)
+            {
+                <tr>
+                    <td>@r.Id</td>
+                    <td>@r.RoomNumber</td>
+                    <td>@r.RoomTypeName</td>
+                    <td>@r.PricePerDay.ToString("n0")</td>
+                    <td>
+                        <form method="post" asp-page-handler="UpdateStatus" class="d-flex gap-2">
+                            <input type="hidden" name="id" value="@r.Id" />
+                            <select class="form-select form-select-sm" name="status">
+                                @foreach (var s in PetHotelManager.Pages.Rooms.IndexModel.StatusOptions)
+                                {
+                                    if (r.Status == s)
+                                    {
+                                        <option value="@s" selected="selected">@s</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@s">@s</option>
+                                    }
+                                }
+                            </select>
+                            <button class="btn btn-sm btn-outline-primary">Cập nhật</button>
+                        </form>
+                    </td>
+                    <td class="d-flex gap-1">
+                        <a class="btn btn-sm btn-outline-secondary" href="/Rooms/Edit?id=@r.Id">Sửa</a>
+                        <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Xác nhận xóa phòng?');">
+                            <input type="hidden" name="id" value="@r.Id" />
+                            <button class="btn btn-sm btn-outline-danger">Xóa</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr><td colspan="6" class="text-center text-muted">Không có dữ liệu</td></tr>
         }
         </tbody>
     </table>
