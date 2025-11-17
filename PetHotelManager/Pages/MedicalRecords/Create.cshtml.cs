@@ -25,6 +25,21 @@ namespace PetHotelManager.Pages.MedicalRecords
         public string? Error { get; set; }
         public string? Success { get; set; }
 
+        private HttpClient GetAuthenticatedClient()
+        {
+            var client = _http.CreateClient("ApiClient");
+            
+            // Get the JWT token from cookie and set as Bearer token
+            var token = HttpContext.Request.Cookies["ApiToken"];
+            if (!string.IsNullOrEmpty(token))
+            {
+                client.DefaultRequestHeaders.Authorization = 
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+            }
+            
+            return client;
+        }
+
         public async Task<IActionResult> OnGetAsync()
         {
             await LoadLookupsAsync();
@@ -59,7 +74,7 @@ namespace PetHotelManager.Pages.MedicalRecords
             try
             {
                 var baseUrl = $"{Request.Scheme}://{Request.Host}";
-                var client = _http.CreateClient();
+                var client = GetAuthenticatedClient();
 
                 var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
                 if (string.IsNullOrEmpty(userId))
@@ -109,7 +124,7 @@ namespace PetHotelManager.Pages.MedicalRecords
         private async Task LoadLookupsAsync()
         {
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
-            var client = _http.CreateClient();
+            var client = GetAuthenticatedClient();
 
             // Pets (Staff, Vet có quyền)
             Pets = await client.GetFromJsonAsync<List<PetItem>>($"{baseUrl}/api/Pets") ?? new List<PetItem>();

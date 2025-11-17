@@ -29,10 +29,11 @@ namespace PetHotelManager.Pages.Products
         public async Task OnGetAsync()
         {
             var client = _clientFactory.CreateClient("ApiClient");
-            var token = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
-            if (token != null)
+            var token = HttpContext.Request.Cookies["ApiToken"];
+            if (!string.IsNullOrEmpty(token))
             {
-                client.DefaultRequestHeaders.Add("Cookie", $".AspNetCore.Identity.Application={token}");
+                client.DefaultRequestHeaders.Authorization = 
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
             }
 
             var baseUrl = $"{Request.Scheme}://{Request.Host}";
