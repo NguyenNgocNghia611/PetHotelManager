@@ -29,11 +29,12 @@ namespace PetHotelManager.Pages.Admin.Dashboard
 
             var request = new HttpRequestMessage(HttpMethod.Get, requestUrl);
 
-            var token = HttpContext.Request.Cookies[".AspNetCore.Identity.Application"];
-            if (token != null)
-            {
-                request.Headers.Add("Cookie", $".AspNetCore.Identity.Application={token}");
-            }
+            var token = HttpContext.Request.Cookies["ApiToken"];
+            if (!string.IsNullOrEmpty(token))
+                {
+                    request.Headers.Authorization = 
+                        new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", token);
+                }
 
             try
             {

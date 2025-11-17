@@ -76,8 +76,23 @@ namespace PetHotelManager.Pages.Account
 
             try
             {
+                // Set Accept header to ensure we get JSON response
+                client.DefaultRequestHeaders.Accept.Clear();
+                client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+
                 var response = await client.PostAsync($"{baseUrl}/api/auth/login", content);
                 var responseContent = await response.Content.ReadAsStringAsync();
+
+                // Check if response is actually JSON before attempting to deserialize
+                var contentType = response.Content.Headers.ContentType?.MediaType;
+                if (contentType != "application/json")
+                {
+                    // Response is not JSON (likely HTML error page)
+                    var statusCode = (int)response.StatusCode;
+                    var preview = responseContent.Length > 200 ? responseContent.Substring(0, 200) + "..." : responseContent;
+                    Error = $"Lỗi kết nối: Server trả về định dạng không hợp lệ (HTTP {statusCode}). Nội dung: {preview}";
+                    return Page();
+                }
 
                 if (response.IsSuccessStatusCode)
                 {
@@ -95,15 +110,14 @@ namespace PetHotelManager.Pages.Account
                             // Sign in the user using Identity (this creates the proper authentication cookie)
                             await _signInManager.SignInAsync(user, isPersistent: Input.RememberMe);
 
-                            // Store the JWT token in a separate cookie for API calls
+                            // Store the JWT token in a cookie for API calls
+                            // Token lifetime is 3 hours (configured in AuthController)
                             var cookieOptions = new CookieOptions
                             {
                                 HttpOnly = true,
                                 Secure = Request.IsHttps,
                                 SameSite = SameSiteMode.Lax,
-                                Expires = Input.RememberMe 
-                                    ? DateTimeOffset.UtcNow.AddDays(30) 
-                                    : DateTimeOffset.UtcNow.AddHours(3)
+                                Expires = DateTimeOffset.UtcNow.AddHours(3) // Match JWT token expiration
                             };
                             
                             Response.Cookies.Append("ApiToken", loginResponse.Token, cookieOptions);
