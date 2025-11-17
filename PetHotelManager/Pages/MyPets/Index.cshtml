@@ -31,7 +31,7 @@
                 <th>Giống</th>
                 <th>Tuổi</th>
                 <th>Tình trạng</th>
-                <th style="width:160px"></th>
+                <th style="width:220px"></th>
             </tr>
         </thead>
         <tbody>
@@ -52,6 +52,7 @@
                     <td>@p.Age</td>
                     <td>@p.HealthStatus</td>
                     <td class="d-flex gap-1">
+                        <a class="btn btn-sm btn-outline-info" href="/MyPets/Details?id=@p.Id">Bệnh sử</a>
                         <a class="btn btn-sm btn-outline-secondary" href="/MyPets/Edit?id=@p.Id">Sửa</a>
                         <form method="post" asp-page-handler="Delete" onsubmit="return confirm('Xác nhận xóa thú cưng này?');">
                             <input type="hidden" name="id" value="@p.Id" />
