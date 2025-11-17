@@ -1,0 +1,98 @@
+@page
+@model PetHotelManager.Pages.Veterinarian.Pets.IndexModel
+@{
+    ViewData["Title"] = "Danh sách Thú cưng";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4">Danh sách Thú cưng</h2>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row g-3">
+                <div class="col-md-10">
+                    <label class="form-label">Tìm kiếm theo tên, loài hoặc chủ sở hữu:</label>
+                    <input type="text" name="SearchTerm" value="@Model.SearchTerm" 
+                           class="form-control" placeholder="Nhập từ khóa tìm kiếm..." />
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-search"></i> Tìm kiếm
+                    </button>
+                </div>
+            </form>
+            @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+            {
+                <div class="mt-2">
+                    <a asp-page="./Index" class="btn btn-sm btn-secondary">
+                        <i class="bi bi-x-circle"></i> Xóa bộ lọc
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (Model.FilteredPets.Any())
+    {
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Kết quả: @Model.FilteredPets.Count thú cưng</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    @foreach (var pet in Model.FilteredPets)
+                    {
+                        <div class="col-md-4 mb-4">
+                            <div class="card h-100">
+                                @if (!string.IsNullOrEmpty(pet.ImageUrl))
+                                {
+                                    <img src="@pet.ImageUrl" class="card-img-top" alt="@pet.Name" 
+                                         style="height: 200px; object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <div class="card-img-top bg-secondary text-white d-flex align-items-center justify-content-center" 
+                                         style="height: 200px;">
+                                        <i class="bi bi-image" style="font-size: 3rem;"></i>
+                                    </div>
+                                }
+                                <div class="card-body">
+                                    <h5 class="card-title">@pet.Name</h5>
+                                    <p class="card-text">
+                                        <strong>Loài:</strong> @pet.Species<br />
+                                        <strong>Chủ sở hữu:</strong> @(pet.OwnerName ?? "-")
+                                    </p>
+                                </div>
+                                <div class="card-footer">
+                                    <a asp-page="/Veterinarian/MedicalRecords/Index" 
+                                       asp-route-selectedPetId="@pet.Id" 
+                                       class="btn btn-primary btn-sm w-100">
+                                        <i class="bi bi-clipboard-pulse"></i> Xem Hồ sơ Y tế
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-secondary">
+            @if (!string.IsNullOrWhiteSpace(Model.SearchTerm))
+            {
+                <text>Không tìm thấy thú cưng nào với từ khóa "@Model.SearchTerm".</text>
+            }
+            else
+            {
+                <text>Chưa có thú cưng nào trong hệ thống.</text>
+            }
+        </div>
+    }
+</div>

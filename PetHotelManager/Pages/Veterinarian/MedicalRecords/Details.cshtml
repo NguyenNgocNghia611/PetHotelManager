@@ -1,0 +1,100 @@
+@page
+@model PetHotelManager.Pages.Veterinarian.MedicalRecords.DetailsModel
+@{
+    ViewData["Title"] = "Chi tiết Hồ sơ Y tế";
+}
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Chi tiết Hồ sơ Y tế</h2>
+        <div>
+            <a asp-page="./Index" class="btn btn-secondary">Quay lại</a>
+            <a asp-page="./Edit" asp-route-id="@Model.Record?.Id" class="btn btn-warning">Sửa</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">@Model.ErrorMessage</div>
+    }
+
+    @if (Model.Record != null)
+    {
+        <div class="card mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Thông tin Khám</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <p><strong>Mã hồ sơ:</strong> #@Model.Record.Id</p>
+                        <p><strong>Ngày khám:</strong> @Model.Record.ExaminationDate.ToString("dd/MM/yyyy HH:mm")</p>
+                        <p><strong>Bác sĩ thú y:</strong> @(Model.Record.VeterinarianName ?? "-")</p>
+                    </div>
+                    <div class="col-md-6">
+                        <p><strong>Mã thú cưng:</strong> #@Model.Record.PetId</p>
+                    </div>
+                </div>
+                <hr />
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="fw-bold">Triệu chứng:</h6>
+                        <p class="ms-3">@(Model.Record.Symptoms ?? "(Không có ghi chú)")</p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <h6 class="fw-bold">Chẩn đoán:</h6>
+                        <p class="ms-3">@(Model.Record.Diagnosis ?? "(Không có ghi chú)")</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (Model.Record.Prescriptions?.Any() == true)
+        {
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">Đơn Thuốc</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Tên thuốc</th>
+                                    <th>Số lượng</th>
+                                    <th>Liều dùng</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{int index = 1;}
+                                @foreach (var prescription in Model.Record.Prescriptions)
+                                {
+                                    <tr>
+                                        <td>@index</td>
+                                        <td>@(prescription.ProductName ?? $"Product #{prescription.ProductId}")</td>
+                                        <td>@prescription.Quantity</td>
+                                        <td>@(prescription.Dosage ?? "-")</td>
+                                    </tr>
+                                    index++;
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle"></i> Hồ sơ này không có đơn thuốc.
+            </div>
+        }
+    }
+    else
+    {
+        <div class="alert alert-warning">Không tìm thấy hồ sơ y tế.</div>
+    }
+</div>
