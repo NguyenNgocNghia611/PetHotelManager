@@ -21,7 +21,7 @@ namespace PetHotelManager.Pages.Admin.Users
 
         [BindProperty] public InputModel Input { get; set; }
 
-        public List<string> Roles { get; set; } = new List<string> { "Staff", "Doctor", "Admin" };
+        public List<string> Roles { get; set; } = new List<string> { "Staff", "Veterinarian", "Admin" };
 
         public class InputModel
         {

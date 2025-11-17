@@ -6,7 +6,7 @@ using PetHotelManager.Data;
 
 namespace PetHotelManager.Pages.Appointments
 {
-    [Authorize(Roles = "Admin,Staff,Veterinarian,Doctor")]
+    [Authorize(Roles = "Admin,Staff,Veterinarian")]
     public class FilterModel : PageModel
     {
         private readonly ApplicationDbContext _context;

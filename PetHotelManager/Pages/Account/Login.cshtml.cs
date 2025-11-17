@@ -72,7 +72,7 @@ namespace PetHotelManager.Pages.Account
             // Lấy role trực tiếp từ userManager (Claims chưa update trong request hiện tại)
             var roles = await _userManager.GetRolesAsync(user);
             var isCustomer = roles.Contains("Customer");
-            var isHotel = roles.Contains("Admin") || roles.Contains("Staff") || roles.Contains("Veterinarian") || roles.Contains("Doctor");
+            var isHotel = roles.Contains("Admin") || roles.Contains("Staff") || roles.Contains("Veterinarian");
 
             // Chiến lược điều hướng:
             // - Customer: luôn về /Start để tránh ReturnUrl dính trang hotel

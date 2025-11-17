@@ -63,9 +63,9 @@ namespace PetHotelManager.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            if (createUserDto.Role != "Staff" && createUserDto.Role != "Doctor")
+            if (createUserDto.Role != "Staff" && createUserDto.Role != "Veterinarian")
             {
-                return BadRequest(new { Message = "Vai trò không hợp lệ. Chỉ chấp nhận 'Staff' hoặc 'Doctor'." });
+                return BadRequest(new { Message = "Vai trò không hợp lệ. Chỉ chấp nhận 'Staff' hoặc 'Veterinarian'." });
             }
 
             var userExists = await _userManager.FindByNameAsync(createUserDto.Username);

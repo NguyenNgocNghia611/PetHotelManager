@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace PetHotelManager.Pages.Pets
 {
-    [Authorize(Roles = "Admin,Staff,Doctor,Veterinarian")]
+    [Authorize(Roles = "Admin,Staff,Veterinarian")]
     public class IndexModel : PageModel
     {
         private readonly IHttpClientFactory _clientFactory;

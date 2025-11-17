@@ -4,7 +4,7 @@
     var  isAuthenticated = User?.Identity?.IsAuthenticated ?? false;
     bool isAdmin         = User.IsInRole("Admin");
     bool isStaff         = User.IsInRole("Staff");
-    bool isVet           = User.IsInRole("Veterinarian") || User.IsInRole("Doctor");
+    bool isVet           = User.IsInRole("Veterinarian");
     bool isCustomer      = User.IsInRole("Customer");
     var  userName        = isAuthenticated ? User.Identity!.Name : "Guest";
 }
@@ -78,7 +78,7 @@
                         </li>
                     }
 
-                    @* Veterinarian/Doctor *@
+                    @* Veterinarian *@
                     @if (isVet)
                     {
                         <li class="nav-item dropdown">

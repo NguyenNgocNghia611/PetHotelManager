@@ -8,7 +8,7 @@ public class AdminCreateUserDto
     [Required] [EmailAddress] public string  Email       { get; set; }
     [Required]                public string  Password    { get; set; }
     [Required]                public string  FullName    { get; set; }
-    [Required]                public string  Role        { get; set; } // "Staff" or "Doctor"
+    [Required]                public string  Role        { get; set; } // "Staff" or "Veterinarian"
     public                           string? PhoneNumber { get; set; }
 
 }

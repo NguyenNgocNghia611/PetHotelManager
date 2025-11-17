@@ -55,7 +55,7 @@ builder.Services.AddAuthentication()
 builder.Services.AddRazorPages();
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("Hotel", p => p.RequireRole("Admin","Staff","Veterinarian","Doctor"));
+    options.AddPolicy("Hotel", p => p.RequireRole("Admin","Staff","Veterinarian"));
     options.AddPolicy("CustomerOnly", p => p.RequireRole("Customer"));
     // Fallback: chỉ cần đăng nhập, không bắt buộc role Hotel
     options.FallbackPolicy = new Microsoft.AspNetCore.Authorization.AuthorizationPolicyBuilder()

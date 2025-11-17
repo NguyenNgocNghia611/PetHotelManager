@@ -21,7 +21,7 @@ namespace PetHotelManager.Controllers
         }
 
         // POST: api/MedicalRecords
-        [Authorize(Roles = "Staff,Doctor,Veterinarian")]
+        [Authorize(Roles = "Staff,Veterinarian")]
         [HttpPost]
         public async Task<IActionResult> Create([FromBody] CreateMedicalRecordDto dto)
         {
@@ -132,7 +132,7 @@ namespace PetHotelManager.Controllers
                 .OrderByDescending(m => m.ExaminationDate)
                 .ToListAsync();
 
-            var isPrivileged = User.IsInRole("Admin") || User.IsInRole("Staff") || User.IsInRole("Doctor") || User.IsInRole("Veterinarian");
+            var isPrivileged = User.IsInRole("Admin") || User.IsInRole("Staff") || User.IsInRole("Veterinarian");
 
             if (!isPrivileged)
             {
@@ -180,7 +180,7 @@ namespace PetHotelManager.Controllers
 
             if (m == null) return NotFound();
 
-            var isPrivileged = User.IsInRole("Admin") || User.IsInRole("Staff") || User.IsInRole("Doctor") || User.IsInRole("Veterinarian");
+            var isPrivileged = User.IsInRole("Admin") || User.IsInRole("Staff") || User.IsInRole("Veterinarian");
             if (!isPrivileged && m.Pet.UserId != userId) return Forbid();
 
             var dto = new MedicalRecordDto

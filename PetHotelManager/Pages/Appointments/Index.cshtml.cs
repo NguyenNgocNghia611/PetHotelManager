@@ -17,7 +17,7 @@ namespace PetHotelManager.Pages.Appointments
             _context = context;
         }
 
-        public bool IsAdminStaffVet => User.IsInRole("Admin") || User.IsInRole("Staff") || User.IsInRole("Veterinarian") || User.IsInRole("Doctor");
+        public bool IsAdminStaffVet => User.IsInRole("Admin") || User.IsInRole("Staff") || User.IsInRole("Veterinarian");
         public bool IsCustomer => User.IsInRole("Customer");
 
         [BindProperty(SupportsGet = true)]

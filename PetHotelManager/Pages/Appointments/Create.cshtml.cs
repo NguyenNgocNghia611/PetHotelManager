@@ -21,7 +21,7 @@ namespace PetHotelManager.Pages.Appointments
         }
 
         public bool IsCustomer => User.IsInRole("Customer");
-        public bool IsStaff => User.IsInRole("Staff") || User.IsInRole("Admin") || User.IsInRole("Veterinarian") || User.IsInRole("Doctor");
+        public bool IsStaff => User.IsInRole("Staff") || User.IsInRole("Admin") || User.IsInRole("Veterinarian");
 
         public List<ServiceItem> Services { get; set; } = [];
         public List<RoomItem> Rooms { get; set; } = [];
